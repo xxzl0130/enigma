@@ -1,0 +1,79 @@
+{
+    "Gun/developGun": {
+        "request": {
+            "mp": [
+                "mp"
+            ],
+            "ammo": [
+                "ammo"
+            ],
+            "mre": [
+                "mre"
+            ],
+            "part": [
+                "part"
+            ],
+            "input_level": [
+                "input_level"
+            ]
+        },
+        "response": {
+            "gun_id": [
+                "gun_id"
+            ]
+        }
+    },
+    "Gun/developMultiGun": {
+        "request": {
+            "mp": [
+                "mp"
+            ],
+            "ammo": [
+                "ammo"
+            ],
+            "mre": [
+                "mre"
+            ],
+            "part": [
+                "part"
+            ],
+            "input_level": [
+                "input_level"
+            ],
+            "build_multi": [
+                "build_multi"
+            ]
+        },
+        "response": {
+            "gun_ids": [
+                "gun_ids"
+            ]
+        }
+    },
+    "Mission/battleFinish": {
+        "request": {
+            "if_enemy_die": [
+                "if_enemy_die"
+            ]
+        },
+        "response": {
+            "enemy": [
+                "died_this_section",
+                "enemy"
+            ],
+            "battle_get_gun": [
+                "battle_get_gun",
+                "gun_id"
+            ]
+        }
+    },
+    "Mission/endTurn": {
+        "request": {},
+        "response": {
+            "reward_gun": [
+                "mission_win_result",
+                "reward_gun"
+            ]
+        }
+    }
+}
