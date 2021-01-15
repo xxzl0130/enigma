@@ -1,13 +1,16 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using System.Timers;
 using Titanium.Web.Proxy;
 using Titanium.Web.Proxy.EventArguments;
 using Titanium.Web.Proxy.Models;
 using Newtonsoft.Json.Linq;
 using GF_CipherSharp;
+using Newtonsoft.Json;
 
 namespace enigma
 {
@@ -26,6 +29,13 @@ namespace enigma
             // 代理服务器
             private ProxyServer _proxyServer;
             private ProxyEndPoint _endPoint;
+
+            // 清理signDict用的定时器
+            private Timer _signTimer;
+            // sign过期时间，10分钟
+            private static int _signExpireTime = 30 * 60 * 1000;
+            // sign数据的dict，key为IP，value为sign,uid和时间戳，定时清理
+            private ConcurrentDictionary<string, Tuple<string, string, int>> _signDict = new ConcurrentDictionary<string, Tuple<string, string, int>>();
 
             /// <summary>
             /// 解析到数据请求进一步处理的delegate
@@ -66,6 +76,22 @@ namespace enigma
                 _proxyServer.BeforeResponse += BeforeResponse;
                 _proxyServer.BeforeRequest += BeforeRequest;
                 _endPoint = new ExplicitProxyEndPoint(IPAddress.Any, 18888, false);
+                _signTimer = new Timer(_signExpireTime) {AutoReset = true, Enabled = true};
+                _signTimer.Elapsed += _signTimerElapsed;
+            }
+
+            // 清理到期的sign
+            private void _signTimerElapsed(object sender, ElapsedEventArgs e)
+            {
+                var time = Utils.GetUTC();
+                Tuple<string, string, int> tmp;
+                foreach (var it in _signDict)
+                {
+                    if (time - it.Value.Item3 > _signExpireTime)
+                    {
+                        _signDict.TryRemove(it.Key,out tmp);
+                    }
+                }
             }
 
             /// <summary>
@@ -152,19 +178,31 @@ namespace enigma
                 if (HostList.All(it => !host.EndsWith(it)))
                     return; // 不在host列表里
 
-                var reqBody = await e.GetRequestBodyAsString();
-                var respBody = await e.GetResponseBodyAsString();
                 if (UidList.Any(it => url.EndsWith(it)))
                 {
-                    GetUid(reqBody, respBody);
+                    await GetUid(e);
                     return;
                 }
+                var reqBody = await e.GetRequestBodyAsString();
+                var respBody = await e.GetResponseBodyAsString();
                 // TODO 更多处理
             }
 
-            private void GetUid(string reqBody, string respBody)
+            /// <summary>
+            /// 解析sign信息并将其保存到dict中
+            /// </summary>
+            private async Task GetUid(SessionEventArgs e)
             {
-
+                var respBody = await e.GetResponseBodyAsString();
+                var data = Cipher.DecodeDefault(respBody);
+                if (data == "")
+                    return;
+                var obj = (JObject) JsonConvert.DeserializeObject(data);
+                if (obj == null || !obj.ContainsKey("sign") || !obj.ContainsKey("uid"))
+                    return;
+                var ip = e.ClientRemoteEndPoint.Address.ToString();
+                _signDict[ip] = new Tuple<string, string, int>(
+                    obj["sign"].Value<string>(), obj["uid"].Value<string>(), Utils.GetUTC());
             }
         }
     }
