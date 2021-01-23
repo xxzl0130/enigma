@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Web;
@@ -19,7 +20,7 @@ namespace enigma
     {
         public class Proxy
         {
-            // sign过期时间，10分钟
+            // sign过期时间，30分钟
             private static int _signExpireTime = 30 * 60 * 1000;
             // 单例对象
             private static readonly Proxy _instance = new Proxy();
@@ -49,10 +50,10 @@ namespace enigma
 
             // 清理signDict用的定时器
             private Timer _signTimer;
-            // sign数据的dict，key为IP，value为sign,uid和时间戳，定时清理
+            // sign数据的dict，key为uid，value为sign,uid和时间戳，定时清理
             private ConcurrentDictionary<string, UserInfo> _signDict = new ConcurrentDictionary<string, UserInfo>();
             // 数据处理规则
-            public JObject _ruleJObject;
+            private JObject _ruleJObject;
             // 要处理的url列表，从rule的json的key列表读取
             private List<string> _urlList;
 
@@ -65,6 +66,10 @@ namespace enigma
             /// 解析到数据请求进一步处理的event
             /// </summary>
             public event DataHandler DataEvent;
+            /// <summary>
+            /// 本机IP地址
+            /// </summary>
+            public string LocalIPAddress;
 
             /// <summary>
             /// 游戏服务器host列表
@@ -106,6 +111,12 @@ namespace enigma
                     {
                         _urlList.Add(it.Key);
                     }
+                }
+
+                using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+                {
+                    socket.Connect("114.114.114.114", 65530);
+                    LocalIPAddress = socket.LocalEndPoint is IPEndPoint endPoint ? endPoint.Address.ToString() : "";
                 }
             }
 
@@ -185,12 +196,31 @@ namespace enigma
                 if(host == null)
                     return;
                 if (HostList.Any(it => host.EndsWith(it)) &&
-                    _urlList.Any(it => url.EndsWith(it))) 
+                    (_urlList.Any(it => url.EndsWith(it)) ||
+                     url.EndsWith("/Index/index"))) 
                 {
-                    // 要现在request里读取body才能保存下来
+                    // 要先在request里读取body才能保存下来
                     var body = await e.GetRequestBody();
                     if (body.Length == 0) return;
                     e.HttpClient.Request.KeepBody = true;
+
+                    return;
+                }
+
+                // 心跳包
+                if (url.EndsWith("/Index/heartBeat"))
+                {
+                    var body = await e.GetRequestBodyAsString();
+                    if (body.Length == 0) return;
+                    var parsed = HttpUtility.ParseQueryString(body);
+                    var uid = parsed["uid"];
+                    if (_signDict.ContainsKey(uid))
+                    {
+                        var tmp = _signDict[uid];
+                        tmp.timestamp = Utils.GetUTC();
+                        _signDict[uid] = tmp;
+                    }
+
                     return;
                 }
 
@@ -239,9 +269,7 @@ namespace enigma
                 var obj = (JObject) JsonConvert.DeserializeObject(data);
                 if (obj == null || !obj.ContainsKey("sign") || !obj.ContainsKey("uid"))
                     return;
-                var ip = e.ClientRemoteEndPoint.Address.ToString();
-                _signDict[ip] = new UserInfo(obj["uid"].Value<string>(), obj["sign"].Value<string>(), Utils.GetUTC());
-
+                _signDict[obj["uid"].Value<string>()] = new UserInfo(obj["uid"].Value<string>(), obj["sign"].Value<string>(), Utils.GetUTC());
             }
 
             /// <summary>
@@ -255,11 +283,13 @@ namespace enigma
             {
                 if(rule == null)
                     return;
-
-                var ip = e.ClientRemoteEndPoint.Address.ToString();
-                if(!_signDict.ContainsKey(ip))
+                var reqBody = await e.GetRequestBodyAsString();
+                var parsedReq = HttpUtility.ParseQueryString(reqBody);
+                var uid = parsedReq["uid"];
+                if(uid == null || !_signDict.ContainsKey(uid))
                     return;
-                var user = _signDict[ip];
+
+                var user = _signDict[uid];
 
                 var dataJObject = new JObject();
 
@@ -267,9 +297,7 @@ namespace enigma
                 {
                     while (true)
                     {
-                        var reqBody = await e.GetRequestBodyAsString();
-                        var parsed = HttpUtility.ParseQueryString(reqBody);
-                        var outCode = parsed["outdatacode"];
+                        var outCode = parsedReq["outdatacode"];
                         if (outCode == null)
                             break;
                         var data = Cipher.Decode(outCode, user.Sign, false);
@@ -336,11 +364,11 @@ namespace enigma
                 }
 #endif
 
-                dataJObject["uid"] = user.Uid;
+                dataJObject["uid"] = uid;
                 dataJObject["type"] = type;
                 // 更新时间戳
-                user.timestamp = Utils.GetUTC();
-                _signDict[ip] = user;
+                dataJObject["timestamp"] = user.timestamp = Utils.GetUTC();
+                _signDict[uid] = user;
 
                 // 调用数据后处理
                 DataEvent?.Invoke(dataJObject);

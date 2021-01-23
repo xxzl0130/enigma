@@ -57,10 +57,7 @@
             ],
             "use_fairy_skill": [
                 "use_fairy_skill"
-            ],
-            "current_time": [
-                "current_time"
-            ] 
+            ]
         },
         "response": {
             "enemy": [
