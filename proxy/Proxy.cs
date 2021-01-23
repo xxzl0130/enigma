@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using System.Timers;
+using System.Web;
 using Titanium.Web.Proxy;
 using Titanium.Web.Proxy.EventArguments;
 using Titanium.Web.Proxy.Models;
@@ -18,6 +19,8 @@ namespace enigma
     {
         public class Proxy
         {
+            // sign过期时间，10分钟
+            private static int _signExpireTime = 30 * 60 * 1000;
             // 单例对象
             private static readonly Proxy _instance = new Proxy();
 
@@ -46,13 +49,11 @@ namespace enigma
 
             // 清理signDict用的定时器
             private Timer _signTimer;
-            // sign过期时间，10分钟
-            private static int _signExpireTime = 30 * 60 * 1000;
             // sign数据的dict，key为IP，value为sign,uid和时间戳，定时清理
             private ConcurrentDictionary<string, UserInfo> _signDict = new ConcurrentDictionary<string, UserInfo>();
             // 数据处理规则
-            private JObject _dataProcessJObject;
-            // 要处理的url列表
+            public JObject _ruleJObject;
+            // 要处理的url列表，从rule的json的key列表读取
             private List<string> _urlList;
 
             /// <summary>
@@ -94,20 +95,23 @@ namespace enigma
                 _proxyServer.BeforeResponse += BeforeResponse;
                 _proxyServer.BeforeRequest += BeforeRequest;
                 _endPoint = new ExplicitProxyEndPoint(IPAddress.Any, 18888, false);
-                _signTimer = new Timer(_signExpireTime) {AutoReset = true, Enabled = true};
+                _proxyServer.AddEndPoint(_endPoint);
+                _signTimer = new Timer(_signExpireTime) {AutoReset = true, Enabled = true, Interval = _signExpireTime};
                 _signTimer.Elapsed += _signTimerElapsed;
-                _dataProcessJObject = (JObject) JsonConvert.DeserializeObject(System.Text.Encoding.UTF8.GetString(Resource.DataProcess));
+                _ruleJObject = (JObject) JsonConvert.DeserializeObject(System.Text.Encoding.UTF8.GetString(Resource.DataProcess));
                 _urlList = new List<string>();
-                if (_dataProcessJObject != null)
+                if (_ruleJObject != null)
                 {
-                    foreach (var it in _dataProcessJObject)
+                    foreach (var it in _ruleJObject)
                     {
                         _urlList.Add(it.Key);
                     }
                 }
             }
 
-            // 清理到期的sign
+            /// <summary>
+            /// 清理到期的sign
+            /// </summary>
             private void _signTimerElapsed(object sender, ElapsedEventArgs e)
             {
                 var time = Utils.GetUTC();
@@ -162,6 +166,9 @@ namespace enigma
                     _proxyServer.Start();
             }
 
+            /// <summary>
+            /// 停止代理
+            /// </summary>
             public void Stop()
             {
                 if(_proxyServer.ProxyRunning)
@@ -180,10 +187,10 @@ namespace enigma
                 if (HostList.Any(it => host.EndsWith(it)) &&
                     _urlList.Any(it => url.EndsWith(it))) 
                 {
+                    // 要现在request里读取body才能保存下来
                     var body = await e.GetRequestBody();
                     if (body.Length == 0) return;
-                    var req = e.HttpClient.Request;
-                    req.KeepBody = true;
+                    e.HttpClient.Request.KeepBody = true;
                     return;
                 }
 
@@ -215,7 +222,7 @@ namespace enigma
 
                 foreach (var it in _urlList.Where(it => url.EndsWith(it)))
                 {
-                    await ProcessData(e, _dataProcessJObject[it]);
+                    await ProcessData(e, _ruleJObject[it], it);
                     return;
                 }
             }
@@ -233,11 +240,18 @@ namespace enigma
                 if (obj == null || !obj.ContainsKey("sign") || !obj.ContainsKey("uid"))
                     return;
                 var ip = e.ClientRemoteEndPoint.Address.ToString();
-                _signDict[ip] = new UserInfo(obj["sign"].Value<string>(), obj["uid"].Value<string>(), Utils.GetUTC());
+                _signDict[ip] = new UserInfo(obj["uid"].Value<string>(), obj["sign"].Value<string>(), Utils.GetUTC());
 
             }
 
-            private async Task ProcessData(SessionEventArgs e, JToken rule)
+            /// <summary>
+            /// 根据rule处理数据
+            /// </summary>
+            /// <param name="e">代理数据</param>
+            /// <param name="rule">规则</param>
+            /// <param name="type">规则类型，也是url后缀</param>
+            /// <returns></returns>
+            private async Task ProcessData(SessionEventArgs e, JToken rule, string type)
             {
                 if(rule == null)
                     return;
@@ -251,44 +265,63 @@ namespace enigma
 
                 try
                 {
-                    if (rule.Contains("request"))
+                    while (true)
                     {
-                        var reqBody = Cipher.Decode(await e.GetRequestBodyAsString(), user.Sign);
-                        if (reqBody == "")
-                            return;
-                        var reqRule = rule["request"];
+                        var reqBody = await e.GetRequestBodyAsString();
+                        var parsed = HttpUtility.ParseQueryString(reqBody);
+                        var outCode = parsed["outdatacode"];
+                        if (outCode == null)
+                            break;
+                        var data = Cipher.Decode(outCode, user.Sign, false);
+                        if (data == "")
+                            break;
+                        var reqObj = (JObject) JsonConvert.DeserializeObject(data);
+                        var reqRule = rule.Value<JObject>("request");
                         foreach (var it in reqRule)
                         {
-                            var token = reqRule[it];
-                            JToken obj = (JObject) JsonConvert.DeserializeObject(reqBody);
+                            var obj = reqObj.DeepClone();
+                            var token = it.Value;
                             // 循环递归查找
                             foreach (var layer in token)
                             {
-                                obj = obj[layer.Value<string>()];
+                                var key = layer.Value<string>();
+                                obj = obj[key];
+                                if (obj == null)
+                                    break;
                             }
 
-                            dataJObject[it.Value<string>()] = obj;
+                            if(obj != null)
+                                dataJObject[it.Key] = obj;
                         }
+
+                        break;
                     }
 
-                    if (rule.Contains("response"))
+                    while (true)
                     {
                         var respBody = Cipher.Decode(await e.GetResponseBodyAsString(), user.Sign);
                         if (respBody == "")
-                            return;
-                        var respRule = rule["response"];
+                            break;
+                        var respObj = (JObject) JsonConvert.DeserializeObject(respBody);
+                        var respRule = rule.Value<JObject>("response");
                         foreach (var it in respRule)
                         {
-                            var token = respRule[it];
-                            JToken obj = (JObject) JsonConvert.DeserializeObject(respBody);
+                            var token = it.Value;
+                            var obj = respObj.DeepClone();
                             // 循环递归查找
                             foreach (var layer in token)
                             {
-                                obj = obj[layer.Value<string>()];
+                                var key = layer.Value<string>();
+                                obj = obj[key];
+                                if(obj == null)
+                                    break;
                             }
 
-                            dataJObject[it.Value<string>()] = obj;
+                            if (obj != null)
+                                dataJObject[it.Key] = obj;
                         }
+
+                        break;
                     }
                 }
 #if DEBUG
@@ -304,9 +337,13 @@ namespace enigma
 #endif
 
                 dataJObject["uid"] = user.Uid;
+                dataJObject["type"] = type;
                 // 更新时间戳
                 user.timestamp = Utils.GetUTC();
                 _signDict[ip] = user;
+
+                // 调用数据后处理
+                DataEvent?.Invoke(dataJObject);
             }
         }
     }

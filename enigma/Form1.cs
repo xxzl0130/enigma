@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using enigma.proxy;
 
 namespace enigma
 {
@@ -15,6 +16,15 @@ namespace enigma
         public Form1()
         {
             InitializeComponent();
+            Proxy.Instance.Port = 18888;
+            Proxy.Instance.DataEvent += Instance_DataEvent;
+            Proxy.Instance.EnableBlocking = false;
+            Proxy.Instance.Start();
+        }
+
+        private void Instance_DataEvent(Newtonsoft.Json.Linq.JObject jsonObject)
+        {
+            Console.WriteLine(jsonObject);
         }
     }
 }

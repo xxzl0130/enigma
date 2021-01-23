@@ -54,7 +54,13 @@
         "request": {
             "if_enemy_die": [
                 "if_enemy_die"
-            ]
+            ],
+            "use_fairy_skill": [
+                "use_fairy_skill"
+            ],
+            "current_time": [
+                "current_time"
+            ] 
         },
         "response": {
             "enemy": [
@@ -62,8 +68,10 @@
                 "enemy"
             ],
             "battle_get_gun": [
-                "battle_get_gun",
-                "gun_id"
+                "battle_get_gun"
+            ],
+            "battle_rank": [
+                "battle_rank"
             ]
         }
     },
@@ -73,7 +81,11 @@
             "reward_gun": [
                 "mission_win_result",
                 "reward_gun"
-            ]
+            ],
+            "mission_rank": [
+                "mission_win_result",
+                "rank"
+            ] 
         }
     }
 }
