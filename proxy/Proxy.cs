@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Web;
@@ -96,7 +97,9 @@ namespace enigma
                     EnableConnectionPool = false,
                     ForwardToUpstreamGateway = false
                 };
+                // 阻止生成pfx文件
                 _proxyServer.CertificateManager.SaveFakeCertificates = false;
+                _proxyServer.CertificateManager.RootCertificate = new X509Certificate2();
                 _proxyServer.BeforeResponse += BeforeResponse;
                 _proxyServer.BeforeRequest += BeforeRequest;
                 _endPoint = new ExplicitProxyEndPoint(IPAddress.Any, 18888, false);
