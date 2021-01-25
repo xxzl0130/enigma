@@ -13,6 +13,9 @@
             "part": [
                 "part"
             ],
+            "build_slot": [
+                "build_slot"
+            ],
             "input_level": [
                 "input_level"
             ]
@@ -39,6 +42,9 @@
             ],
             "input_level": [
                 "input_level"
+            ],
+            "build_slot": [
+                "build_slot"
             ],
             "build_multi": [
                 "build_multi"
@@ -82,7 +88,89 @@
             "mission_rank": [
                 "mission_win_result",
                 "rank"
-            ] 
+            ]
+        }
+    },
+    "Equip/produceDevelop": {
+        "request": {
+            "build_slot": [
+                "build_slot"
+            ],
+            "formula_id": [
+                "recommended_formula_id"
+            ]
+        },
+        "response": {
+            "equips": "*"
+        }
+    },
+    "Equip/develop": {
+        "request": {
+            "mp": [
+                "mp"
+            ],
+            "ammo": [
+                "ammo"
+            ],
+            "mre": [
+                "mre"
+            ],
+            "part": [
+                "part"
+            ],
+            "input_level": [
+                "input_level"
+            ],
+            "build_slot": [
+                "build_slot"
+            ]
+        },
+        "response": {
+            "type": [
+                "type"
+            ],
+            "equip_id": [
+                "equip_id"
+            ],
+            "fairy_id": [
+                "fairy_id"
+            ],
+            "passive_skill": [
+                "passive_skill"
+            ],
+            "quality_lv": [
+                "quality_lv"
+            ]
+        }
+    },
+    "Equip/developMulti": {
+        "request": {
+            "mp": [
+                "mp"
+            ],
+            "ammo": [
+                "ammo"
+            ],
+            "mre": [
+                "mre"
+            ],
+            "part": [
+                "part"
+            ],
+            "input_level": [
+                "input_level"
+            ],
+            "build_slot": [
+                "build_slot"
+            ],
+            "build_multi": [
+                "build_multi"
+            ]
+        },
+        "response": {
+            "equip_ids": [
+                "equip_ids"
+            ]
         }
     }
 }

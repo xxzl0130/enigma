@@ -276,6 +276,28 @@ namespace enigma
             }
 
             /// <summary>
+            /// 根据rule提取单个数据
+            /// </summary>
+            /// <param name="rule">规则</param>
+            /// <param name="src">原始数据</param>
+            /// <returns></returns>
+            private JToken ExtractObject(JToken rule, JToken src)
+            {
+                JToken obj = src.DeepClone();
+                // 循环递归查找
+                foreach (var layer in rule)
+                {
+                    var key = layer.Value<string>();
+                    if (key == "*")
+                        break;
+                    obj = obj[key];
+                    if (obj == null)
+                        break;
+                }
+                return obj;
+            }
+
+            /// <summary>
             /// 根据rule处理数据
             /// </summary>
             /// <param name="e">代理数据</param>
@@ -306,20 +328,11 @@ namespace enigma
                         var data = Cipher.Decode(outCode, user.Sign, false);
                         if (data == "")
                             break;
-                        var reqObj = (JObject) JsonConvert.DeserializeObject(data);
+                        var reqObj = (JToken) JsonConvert.DeserializeObject(data);
                         var reqRule = rule.Value<JObject>("request");
                         foreach (var it in reqRule)
                         {
-                            var obj = reqObj.DeepClone();
-                            var token = it.Value;
-                            // 循环递归查找
-                            foreach (var layer in token)
-                            {
-                                var key = layer.Value<string>();
-                                obj = obj[key];
-                                if (obj == null)
-                                    break;
-                            }
+                            var obj = ExtractObject(it.Value, reqObj);
 
                             if(obj != null)
                                 dataJObject[it.Key] = obj;
@@ -333,20 +346,11 @@ namespace enigma
                         var respBody = Cipher.Decode(await e.GetResponseBodyAsString(), user.Sign);
                         if (respBody == "")
                             break;
-                        var respObj = (JObject) JsonConvert.DeserializeObject(respBody);
+                        var respObj = (JToken) JsonConvert.DeserializeObject(respBody);
                         var respRule = rule.Value<JObject>("response");
                         foreach (var it in respRule)
                         {
-                            var token = it.Value;
-                            var obj = respObj.DeepClone();
-                            // 循环递归查找
-                            foreach (var layer in token)
-                            {
-                                var key = layer.Value<string>();
-                                obj = obj[key];
-                                if(obj == null)
-                                    break;
-                            }
+                            var obj = ExtractObject(it.Value, respObj);
 
                             if (obj != null)
                                 dataJObject[it.Key] = obj;
