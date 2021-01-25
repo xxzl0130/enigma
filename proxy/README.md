@@ -257,3 +257,9 @@ value中分为request和response，对应http请求的两个部分。其中由�
 {"person_type":1,"person_id":5,"from_spot_id":820,"to_spot_id":826,"move_type":1}
 ```
 记录每个队伍的`spot_id`，在战斗结束的请求中有该id，反向对应找到队伍。  
+
+### Mission/startMission
+任务开始的时候会上报队伍和点号
+```json
+{"mission_id":40,"spots":[{"spot_id":582,"team_id":5},{"spot_id":587,"team_id":1}],"squad_spots":[],"sangvis_spots":[],"ally_id":1611371712}
+```

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -21,9 +22,19 @@ namespace enigma
     {
         public class Proxy
         {
-            // sign过期时间，30分钟
+            /// <summary>
+            /// sign过期时间，30分钟
+            /// </summary>
             private static int _signExpireTime = 30 * 60 * 1000;
-            // 单例对象
+            
+            /// <summary>
+            /// Request中的数据key
+            /// </summary>
+            private static string _OutDataKey = "outdatacode";
+
+            /// <summary>
+            /// 单例对象
+            /// </summary>
             private static readonly Proxy _instance = new Proxy();
 
             /// <summary>
@@ -31,42 +42,89 @@ namespace enigma
             /// </summary>
             public static Proxy Instance => _instance;
 
-            // 代理服务器
+            /// <summary>
+            /// 代理服务器
+            /// </summary>
             private ProxyServer _proxyServer;
             private ProxyEndPoint _endPoint;
 
-            private struct UserInfo
+            private class TeamInfo
+            {
+                /// <summary>
+                /// 妖精类型
+                /// </summary>
+                public int fairy_id;
+
+                /// <summary>
+                /// 所在点位
+                /// </summary>
+                public int spot_id;
+
+                public TeamInfo(int fairy = 0, int spot = 0)
+                {
+                    fairy_id = fairy;
+                    spot_id = spot;
+                }
+            }
+
+            private class UserInfo
             {
                 public string Uid;
                 public string Sign;
                 public int timestamp;
+
+                public TeamInfo[] TeamList;
+
+                /// <summary>
+                /// 妖精列表，为id到fairy_id的对应
+                /// </summary>
+                public Dictionary<int, int> FairyDict;
 
                 public UserInfo(string uid = "", string sign = "", int time = 0)
                 {
                     Uid = uid;
                     Sign = sign;
                     timestamp = time;
+                    TeamList = new TeamInfo[21]; // 直接给20个梯队位置以防以后扩容，0保留
+                    FairyDict = new Dictionary<int, int>();
                 }
             }
 
-            // 清理signDict用的定时器
+            /// <summary>
+            /// 清理signDict用的定时器
+            /// </summary>
             private Timer _signTimer;
-            // sign数据的dict，key为uid，value为sign,uid和时间戳，定时清理
-            private ConcurrentDictionary<string, UserInfo> _signDict = new ConcurrentDictionary<string, UserInfo>();
-            // 数据处理规则
+
+            /// <summary>
+            /// // 用户数据的dict，key为uid，value为sign,uid和时间戳，定时清理
+            /// </summary>
+            private ConcurrentDictionary<string, UserInfo> _userInfoDict = new ConcurrentDictionary<string, UserInfo>();
+
+            /// <summary>
+            /// 数据处理规则
+            /// </summary>
             private JObject _ruleJObject;
-            // 要处理的url列表，从rule的json的key列表读取
+
+            /// <summary>
+            /// 要处理的url列表，从rule的json的key列表读取
+            /// </summary>
             private List<string> _urlList;
+            /// <summary>
+            /// 要特殊处理的url列表
+            /// </summary>
+            private List<string> _specialUrlList;
 
             /// <summary>
             /// 解析到数据请求进一步处理的delegate
             /// </summary>
             /// <param name="jsonObject">json形式的数据</param>
             public delegate void DataHandler(JObject jsonObject);
+
             /// <summary>
             /// 解析到数据请求进一步处理的event
             /// </summary>
             public event DataHandler DataEvent;
+
             /// <summary>
             /// 本机IP地址
             /// </summary>
@@ -106,7 +164,8 @@ namespace enigma
                 _proxyServer.AddEndPoint(_endPoint);
                 _signTimer = new Timer(_signExpireTime) {AutoReset = true, Enabled = true, Interval = _signExpireTime};
                 _signTimer.Elapsed += _signTimerElapsed;
-                _ruleJObject = (JObject) JsonConvert.DeserializeObject(System.Text.Encoding.UTF8.GetString(Resource.DataProcess));
+                _ruleJObject =
+                    (JObject) JsonConvert.DeserializeObject(System.Text.Encoding.UTF8.GetString(Resource.DataProcess));
                 _urlList = new List<string>();
                 if (_ruleJObject != null)
                 {
@@ -115,6 +174,9 @@ namespace enigma
                         _urlList.Add(it.Key);
                     }
                 }
+
+                _specialUrlList = new List<string>
+                    {"/Index/index", "Fairy/teamFairy", "Mission/teamMove", "Mission/startMission"};
 
                 using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
                 {
@@ -130,11 +192,11 @@ namespace enigma
             {
                 var time = Utils.GetUTC();
                 UserInfo tmp;
-                foreach (var it in _signDict)
+                foreach (var it in _userInfoDict)
                 {
                     if (time - it.Value.timestamp > _signExpireTime)
                     {
-                        _signDict.TryRemove(it.Key,out tmp);
+                        _userInfoDict.TryRemove(it.Key, out tmp);
                     }
                 }
             }
@@ -176,7 +238,7 @@ namespace enigma
             /// </summary>
             public void Start()
             {
-                if(!_proxyServer.ProxyRunning)
+                if (!_proxyServer.ProxyRunning)
                     _proxyServer.Start();
             }
 
@@ -185,7 +247,7 @@ namespace enigma
             /// </summary>
             public void Stop()
             {
-                if(_proxyServer.ProxyRunning)
+                if (_proxyServer.ProxyRunning)
                     _proxyServer.Stop();
             }
 
@@ -196,11 +258,11 @@ namespace enigma
             {
                 var host = e.HttpClient.Request.Host;
                 var url = e.HttpClient.Request.Url;
-                if(host == null)
+                if (host == null)
                     return;
                 if (HostList.Any(it => host.EndsWith(it)) &&
                     (_urlList.Any(it => url.EndsWith(it)) ||
-                     url.EndsWith("/Index/index"))) 
+                     _specialUrlList.Any(it => url.EndsWith(it))))
                 {
                     // 要先在request里读取body才能保存下来
                     var body = await e.GetRequestBody();
@@ -217,11 +279,11 @@ namespace enigma
                     if (body.Length == 0) return;
                     var parsed = HttpUtility.ParseQueryString(body);
                     var uid = parsed["uid"];
-                    if (_signDict.ContainsKey(uid))
+                    if (_userInfoDict.ContainsKey(uid))
                     {
-                        var tmp = _signDict[uid];
+                        var tmp = _userInfoDict[uid];
                         tmp.timestamp = Utils.GetUTC();
-                        _signDict[uid] = tmp;
+                        _userInfoDict[uid] = tmp;
                     }
 
                     return;
@@ -239,25 +301,57 @@ namespace enigma
             /// </summary>
             private async Task BeforeResponse(object sender, SessionEventArgs e)
             {
-                var host = e.HttpClient.Request.Host;
-                var url = e.HttpClient.Request.Url;
-
-                if(host == null)
-                    return;
-                if (HostList.All(it => !host.EndsWith(it)))
-                    return; // 不在host列表里
-
-                if (UidList.Any(it => url.EndsWith(it)))
+                try
                 {
-                    await GetUid(e);
-                    return;
-                }
+                    var host = e.HttpClient.Request.Host;
+                    var url = e.HttpClient.Request.Url;
 
-                foreach (var it in _urlList.Where(it => url.EndsWith(it)))
-                {
-                    await ProcessData(e, _ruleJObject[it], it);
-                    return;
+                    if (host == null)
+                        return;
+                    if (HostList.All(it => !host.EndsWith(it)))
+                        return; // 不在host列表里
+
+                    if (UidList.Any(it => url.EndsWith(it)))
+                    {
+                        await GetUid(e);
+                    }
+                    else if (url.EndsWith("Index/index"))
+                    {
+                        await GetIndex(e);
+                    }
+                    else if (url.EndsWith("Fairy/teamFairy"))
+                    {
+                        await TeamFairy(e);
+                    }
+                    else if (url.EndsWith("Mission/teamMove"))
+                    {
+                        await TeamMove(e);
+                    }
+                    else if (url.EndsWith("Mission/startMission"))
+                    {
+                        await StartMission(e);
+                    }
+                    else
+                    {
+                        // 按规则批量处理
+                        foreach (var it in _urlList.Where(it => url.EndsWith(it)))
+                        {
+                            await ProcessData(e, _ruleJObject[it], it);
+                            return;
+                        }
+                    }
                 }
+#if DEBUG
+                catch (Exception err)
+                {
+                    Console.WriteLine(err.ToString());
+                }
+#else
+                catch (Exception)
+                {
+                    // ignored
+                }
+#endif
             }
 
             /// <summary>
@@ -272,7 +366,172 @@ namespace enigma
                 var obj = (JObject) JsonConvert.DeserializeObject(data);
                 if (obj == null || !obj.ContainsKey("sign") || !obj.ContainsKey("uid"))
                     return;
-                _signDict[obj["uid"].Value<string>()] = new UserInfo(obj["uid"].Value<string>(), obj["sign"].Value<string>(), Utils.GetUTC());
+                _userInfoDict[obj["uid"].Value<string>()] = new UserInfo(obj["uid"].Value<string>(),
+                    obj["sign"].Value<string>(), Utils.GetUTC());
+            }
+
+            /// <summary>
+            /// 从request中获取uid
+            /// </summary>
+            private async Task<string> GetUidFromRequest(SessionEventArgs e)
+            {
+                var reqBody = await e.GetRequestBodyAsString();
+                var parsedReq = HttpUtility.ParseQueryString(reqBody);
+                var uid = parsedReq["uid"];
+                return uid;
+            }
+
+            /// <summary>
+            /// 从request中获取uid并进一步获取UserInfo
+            /// </summary>
+            private async Task<UserInfo> GetUserInfo(SessionEventArgs e)
+            {
+                var uid = await GetUidFromRequest(e);
+                if (uid == null || !_userInfoDict.ContainsKey(uid))
+                    return null;
+                var user = _userInfoDict[uid];
+                return user;
+            }
+
+            /// <summary>
+            /// 更新用户信息的时间戳然后更新到dict中
+            /// </summary>
+            private void UpdateUserInfo(UserInfo user)
+            {
+                user.timestamp = Utils.GetUTC();
+                _userInfoDict[user.Uid] = user;
+            }
+
+            /// <summary>
+            /// 获取解析过的request数据
+            /// </summary>
+            private async Task<NameValueCollection> GetParsedRequest(SessionEventArgs e)
+            {
+                var body = await e.GetRequestBodyAsString();
+                if (body == null)
+                    return null;
+                var parsed = HttpUtility.ParseQueryString(body);
+                return parsed;
+            }
+
+            /// <summary>
+            /// 获取用户信息
+            /// </summary>
+            private UserInfo GetUserInfo(NameValueCollection parsed)
+            {
+                var uid = parsed?["uid"];
+                if (uid == null || !_userInfoDict.ContainsKey(uid))
+                    return null;
+                var user = _userInfoDict[uid];
+                return user;
+            }
+
+            /// <summary>
+            /// 解析index游戏初始化数据
+            /// </summary>
+            private async Task GetIndex(SessionEventArgs e)
+            {
+                var user = await GetUserInfo(e);
+                if (user == null)
+                    return;
+                var respBody = await e.GetResponseBodyAsString();
+                var data = Cipher.Decode(respBody, user.Sign);
+                if (data == "")
+                    return;
+                var index = (JObject) JsonConvert.DeserializeObject(data);
+                if (index == null)
+                    return;
+                var fairy = index.Value<JObject>("fairy_with_user_info");
+                user.FairyDict = new Dictionary<int, int>();
+                foreach (var it in fairy)
+                {
+                    var fairy_id = int.Parse(it.Value.Value<string>("fairy_id"));
+                    user.FairyDict[int.Parse(it.Key)] = fairy_id;
+                    var team_id = int.Parse(it.Value.Value<string>("team_id"));
+                    if (team_id > 0 && team_id < user.TeamList.Length - 1)
+                    {
+                        user.TeamList[team_id].fairy_id = fairy_id;
+                    }
+                }
+
+                UpdateUserInfo(user);
+            }
+
+            /// <summary>
+            /// 更换妖精
+            /// </summary>
+            private async Task TeamFairy(SessionEventArgs e)
+            {
+                var parsed = await GetParsedRequest(e);
+                var user = GetUserInfo(parsed);
+                if (user == null)
+                    return;
+                var body = parsed[_OutDataKey];
+                var data = Cipher.Decode(body, user.Sign);
+                if (data == "")
+                    return;
+                var obj = (JObject)JsonConvert.DeserializeObject(data);
+                var team_id = obj.Value<int>("team_id");
+                var fairy = obj.Value<int>("fairy_with_user_id");
+                if (team_id > 0 && team_id < user.TeamList.Length - 1 && user.FairyDict.ContainsKey(fairy))
+                {
+                    user.TeamList[team_id].fairy_id = user.FairyDict[fairy];
+                }
+
+                UpdateUserInfo(user);
+            }
+
+            /// <summary>
+            /// 梯队移动
+            /// </summary>
+            private async Task TeamMove(SessionEventArgs e)
+            {
+                var parsed = await GetParsedRequest(e);
+                var user = GetUserInfo(parsed);
+                if (user == null)
+                    return;
+                var body = parsed[_OutDataKey];
+                var data = Cipher.Decode(body, user.Sign);
+                if (data == "")
+                    return;
+                var obj = (JObject)JsonConvert.DeserializeObject(data);
+                if (obj.Value<int>("person_type") != 1)
+                    return;
+                var team_id = obj.Value<int>("person_id");
+                var spot = obj.Value<int>("to_spot_id");
+                if (team_id > 0 && team_id < user.TeamList.Length - 1)
+                {
+                    user.TeamList[team_id].spot_id = spot;
+                }
+
+                UpdateUserInfo(user);
+            }
+
+            private async Task StartMission(SessionEventArgs e)
+            {
+                var parsed = await GetParsedRequest(e);
+                var user = GetUserInfo(parsed);
+                if (user == null)
+                    return;
+                var body = parsed[_OutDataKey];
+                var data = Cipher.Decode(body, user.Sign);
+                if (data == "")
+                    return;
+                var obj = (JObject)JsonConvert.DeserializeObject(data);
+                if (!obj.ContainsKey("spots"))
+                    return;
+                var spots = obj.Value<JArray>("spots");
+                foreach (var it in spots)
+                {
+                    var spot_id = it.Value<int>("spot_id");
+                    var team_id = it.Value<int>("team_id");
+                    if (team_id > 0 && team_id < user.TeamList.Length - 1)
+                    {
+                        user.TeamList[team_id].spot_id = spot_id;
+                    }
+                }
+
+                UpdateUserInfo(user);
             }
 
             /// <summary>
@@ -294,6 +553,7 @@ namespace enigma
                     if (obj == null)
                         break;
                 }
+
                 return obj;
             }
 
@@ -306,76 +566,62 @@ namespace enigma
             /// <returns></returns>
             private async Task ProcessData(SessionEventArgs e, JToken rule, string type)
             {
-                if(rule == null)
+                if (rule == null)
                     return;
                 var reqBody = await e.GetRequestBodyAsString();
                 var parsedReq = HttpUtility.ParseQueryString(reqBody);
-                var uid = parsedReq["uid"];
-                if(uid == null || !_signDict.ContainsKey(uid))
-                    return;
 
-                var user = _signDict[uid];
+                var user = await GetUserInfo(e);
+                if (user == null)
+                    return;
 
                 var dataJObject = new JObject();
 
-                try
+                while (true)
                 {
-                    while (true)
-                    {
-                        var outCode = parsedReq["outdatacode"];
-                        if (outCode == null)
-                            break;
-                        var data = Cipher.Decode(outCode, user.Sign, false);
-                        if (data == "")
-                            break;
-                        var reqObj = (JToken) JsonConvert.DeserializeObject(data);
-                        var reqRule = rule.Value<JObject>("request");
-                        foreach (var it in reqRule)
-                        {
-                            var obj = ExtractObject(it.Value, reqObj);
-
-                            if(obj != null)
-                                dataJObject[it.Key] = obj;
-                        }
-
+                    var outCode = parsedReq[_OutDataKey];
+                    if (outCode == null)
                         break;
+                    var data = Cipher.Decode(outCode, user.Sign, false);
+                    if (data == "")
+                        break;
+                    var reqObj = (JToken) JsonConvert.DeserializeObject(data);
+                    var reqRule = rule.Value<JObject>("request");
+                    foreach (var it in reqRule)
+                    {
+                        var obj = ExtractObject(it.Value, reqObj);
+
+                        if (obj != null)
+                            dataJObject[it.Key] = obj;
                     }
 
-                    while (true)
-                    {
-                        var respBody = Cipher.Decode(await e.GetResponseBodyAsString(), user.Sign);
-                        if (respBody == "")
-                            break;
-                        var respObj = (JToken) JsonConvert.DeserializeObject(respBody);
-                        var respRule = rule.Value<JObject>("response");
-                        foreach (var it in respRule)
-                        {
-                            var obj = ExtractObject(it.Value, respObj);
+                    break;
+                }
 
-                            if (obj != null)
-                                dataJObject[it.Key] = obj;
-                        }
-
+                while (true)
+                {
+                    var respBody = Cipher.Decode(await e.GetResponseBodyAsString(), user.Sign);
+                    if (respBody == "")
                         break;
-                    }
-                }
-#if DEBUG
-                catch (Exception err)
-                {
-                    Console.WriteLine(err.ToString());
-                }
-#else
-                catch (Exception)
-                {
-                    // ignored
-                }
-#endif
+                    var respObj = (JToken) JsonConvert.DeserializeObject(respBody);
+                    var respRule = rule.Value<JObject>("response");
+                    foreach (var it in respRule)
+                    {
+                        var obj = ExtractObject(it.Value, respObj);
 
-                dataJObject["uid"] = uid;
+                        if (obj != null)
+                            dataJObject[it.Key] = obj;
+                    }
+
+                    break;
+                }
+
+                dataJObject["uid"] = user.Uid;
                 dataJObject["type"] = type;
                 // 更新时间戳
-                dataJObject["timestamp"] = user.timestamp = Utils.GetUTC();
-                _signDict[uid] = user;
+                dataJObject["timestamp"] = Utils.GetUTC();
+
+                UpdateUserInfo(user);
 
                 // 调用数据后处理
                 DataEvent?.Invoke(dataJObject);
