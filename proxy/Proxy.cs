@@ -110,9 +110,15 @@ namespace enigma
             /// </summary>
             private List<string> _urlList;
             /// <summary>
-            /// 要特殊处理的url列表
+            /// 处理数据的函数的代理定义
             /// </summary>
-            private List<string> _specialUrlList;
+            /// <param name="request">请求字符串</param>
+            /// <param name="response">回复字符串</param>
+            private delegate void ProcessDelegate(string request, string response);
+            /// <summary>
+            /// 要特殊处理的url以及对应函数的字典
+            /// </summary>
+            private Dictionary<string, ProcessDelegate> _specialUrlDict;
 
             /// <summary>
             /// 解析到数据请求进一步处理的delegate
@@ -175,8 +181,13 @@ namespace enigma
                     }
                 }
 
-                _specialUrlList = new List<string>
-                    {"/Index/index", "Fairy/teamFairy", "Mission/teamMove", "Mission/startMission"};
+                _specialUrlDict = new Dictionary<string, ProcessDelegate>
+                {
+                    {"/Index/index", GetIndex},
+                    {"Fairy/teamFairy", TeamFairy},
+                    {"Mission/teamMove", TeamMove},
+                    {"Mission/startMission", StartMission}
+                };
 
                 using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
                 {
@@ -262,7 +273,7 @@ namespace enigma
                     return;
                 if (HostList.Any(it => host.EndsWith(it)) &&
                     (_urlList.Any(it => url.EndsWith(it)) ||
-                     _specialUrlList.Any(it => url.EndsWith(it))))
+                     _specialUrlDict.Any(it=>url.EndsWith(it.Key))))
                 {
                     // 要先在request里读取body才能保存下来
                     var body = await e.GetRequestBody();
@@ -310,36 +321,33 @@ namespace enigma
                         return;
                     if (HostList.All(it => !host.EndsWith(it)))
                         return; // 不在host列表里
+                    if (_urlList.All(it => !url.EndsWith(it)) &&
+                        _specialUrlDict.All(it => url.EndsWith(it.Key)))
+                        return; // 不在要处理的列表里
+
+                    var requestString = await e.GetRequestBodyAsString();
+                    var responseString = await e.GetResponseBodyAsString();
 
                     if (UidList.Any(it => url.EndsWith(it)))
                     {
-                        await GetUid(e);
+                        GetUid(requestString,responseString);
+                        return;
                     }
-                    else if (url.EndsWith("Index/index"))
+
+                    // 特殊处理
+                    foreach (var it in _specialUrlDict.Where(it => url.EndsWith(it.Key)))
                     {
-                        await GetIndex(e);
+                        it.Value?.Invoke(requestString, responseString);
+                        return;
                     }
-                    else if (url.EndsWith("Fairy/teamFairy"))
+
+                    // 按规则批量处理
+                    foreach (var it in _urlList.Where(it => url.EndsWith(it)))
                     {
-                        await TeamFairy(e);
+                        ProcessData(requestString, responseString, _ruleJObject[it], it);
+                        return;
                     }
-                    else if (url.EndsWith("Mission/teamMove"))
-                    {
-                        await TeamMove(e);
-                    }
-                    else if (url.EndsWith("Mission/startMission"))
-                    {
-                        await StartMission(e);
-                    }
-                    else
-                    {
-                        // 按规则批量处理
-                        foreach (var it in _urlList.Where(it => url.EndsWith(it)))
-                        {
-                            await ProcessData(e, _ruleJObject[it], it);
-                            return;
-                        }
-                    }
+                    
                 }
 #if DEBUG
                 catch (Exception err)
@@ -357,10 +365,9 @@ namespace enigma
             /// <summary>
             /// 解析sign信息并将其保存到dict中
             /// </summary>
-            private async Task GetUid(SessionEventArgs e)
+            private void GetUid(string request,string response)
             {
-                var respBody = await e.GetResponseBodyAsString();
-                var data = Cipher.DecodeDefault(respBody);
+                var data = Cipher.DecodeDefault(request);
                 if (data == "")
                     return;
                 var obj = (JObject) JsonConvert.DeserializeObject(data);
@@ -373,10 +380,9 @@ namespace enigma
             /// <summary>
             /// 从request中获取uid
             /// </summary>
-            private async Task<string> GetUidFromRequest(SessionEventArgs e)
+            private string GetUidFromRequest(string request)
             {
-                var reqBody = await e.GetRequestBodyAsString();
-                var parsedReq = HttpUtility.ParseQueryString(reqBody);
+                var parsedReq = HttpUtility.ParseQueryString(request);
                 var uid = parsedReq["uid"];
                 return uid;
             }
@@ -384,9 +390,9 @@ namespace enigma
             /// <summary>
             /// 从request中获取uid并进一步获取UserInfo
             /// </summary>
-            private async Task<UserInfo> GetUserInfo(SessionEventArgs e)
+            private UserInfo GetUserInfo(string request)
             {
-                var uid = await GetUidFromRequest(e);
+                var uid = GetUidFromRequest(request);
                 if (uid == null || !_userInfoDict.ContainsKey(uid))
                     return null;
                 var user = _userInfoDict[uid];
@@ -405,12 +411,9 @@ namespace enigma
             /// <summary>
             /// 获取解析过的request数据
             /// </summary>
-            private async Task<NameValueCollection> GetParsedRequest(SessionEventArgs e)
+            private NameValueCollection GetParsedRequest(string request)
             {
-                var body = await e.GetRequestBodyAsString();
-                if (body == null)
-                    return null;
-                var parsed = HttpUtility.ParseQueryString(body);
+                var parsed = HttpUtility.ParseQueryString(request);
                 return parsed;
             }
 
@@ -429,13 +432,12 @@ namespace enigma
             /// <summary>
             /// 解析index游戏初始化数据
             /// </summary>
-            private async Task GetIndex(SessionEventArgs e)
+            private void GetIndex(string request, string response)
             {
-                var user = await GetUserInfo(e);
+                var user = GetUserInfo(request);
                 if (user == null)
                     return;
-                var respBody = await e.GetResponseBodyAsString();
-                var data = Cipher.Decode(respBody, user.Sign);
+                var data = Cipher.Decode(request, user.Sign);
                 if (data == "")
                     return;
                 var index = (JObject) JsonConvert.DeserializeObject(data);
@@ -460,9 +462,9 @@ namespace enigma
             /// <summary>
             /// 更换妖精
             /// </summary>
-            private async Task TeamFairy(SessionEventArgs e)
+            private void TeamFairy(string request, string response)
             {
-                var parsed = await GetParsedRequest(e);
+                var parsed = GetParsedRequest(request);
                 var user = GetUserInfo(parsed);
                 if (user == null)
                     return;
@@ -484,9 +486,9 @@ namespace enigma
             /// <summary>
             /// 梯队移动
             /// </summary>
-            private async Task TeamMove(SessionEventArgs e)
+            private void TeamMove(string request, string response)
             {
-                var parsed = await GetParsedRequest(e);
+                var parsed = GetParsedRequest(request);
                 var user = GetUserInfo(parsed);
                 if (user == null)
                     return;
@@ -507,9 +509,9 @@ namespace enigma
                 UpdateUserInfo(user);
             }
 
-            private async Task StartMission(SessionEventArgs e)
+            private void StartMission(string request, string response)
             {
-                var parsed = await GetParsedRequest(e);
+                var parsed = GetParsedRequest(request);
                 var user = GetUserInfo(parsed);
                 if (user == null)
                     return;
@@ -564,14 +566,12 @@ namespace enigma
             /// <param name="rule">规则</param>
             /// <param name="type">规则类型，也是url后缀</param>
             /// <returns></returns>
-            private async Task ProcessData(SessionEventArgs e, JToken rule, string type)
+            private void ProcessData(string request, string response, JToken rule, string type)
             {
                 if (rule == null)
                     return;
-                var reqBody = await e.GetRequestBodyAsString();
-                var parsedReq = HttpUtility.ParseQueryString(reqBody);
-
-                var user = await GetUserInfo(e);
+                var parsedReq = GetParsedRequest(request);
+                var user = GetUserInfo(parsedReq);
                 if (user == null)
                     return;
 
@@ -600,7 +600,7 @@ namespace enigma
 
                 while (true)
                 {
-                    var respBody = Cipher.Decode(await e.GetResponseBodyAsString(), user.Sign);
+                    var respBody = Cipher.Decode(response, user.Sign);
                     if (respBody == "")
                         break;
                     var respObj = (JToken) JsonConvert.DeserializeObject(respBody);
