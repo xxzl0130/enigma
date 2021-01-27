@@ -7,6 +7,7 @@ using enigma.proxy;
 using GF_CipherSharp;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Serilog;
 
 namespace enigma_server
 {
@@ -17,6 +18,10 @@ namespace enigma_server
             Proxy.Instance.Port = 18888;
             Proxy.Instance.DataEvent += DataEvent; ;
             Proxy.Instance.EnableBlocking = false;
+            Proxy.Instance.Log = new LoggerConfiguration()
+                .MinimumLevel.Verbose()
+                .WriteTo.Console()
+                .CreateLogger();
             Proxy.Instance.Start();
 
             Console.WriteLine(Proxy.Instance.LocalIPAddress + ":" + Proxy.Instance.Port);

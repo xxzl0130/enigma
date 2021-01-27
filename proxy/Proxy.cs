@@ -158,6 +158,11 @@ namespace enigma
                 {"/Index/getDigitalSkyNbUid", "/Index/getUidTianxiaQueue", "/Index/getUidEnMicaQueue"};
 
             /// <summary>
+            /// 日志接口，由外部提供实例
+            /// </summary>
+            public Serilog.ILogger Log = null;
+
+            /// <summary>
             /// 构造函数
             /// </summary>
             private Proxy()
@@ -216,6 +221,7 @@ namespace enigma
                 {
                     if (time - it.Value.timestamp > Defines.SignExpireTime)
                     {
+                        Log?.Debug("Remove user (uid={uid})", it.Key);
                         _userInfoDict.TryRemove(it.Key, out tmp);
                     }
                 }
@@ -278,6 +284,7 @@ namespace enigma
             {
                 var host = e.HttpClient.Request.Host;
                 var url = e.HttpClient.Request.Url;
+                Log?.Verbose("Request {url}", url);
                 if (host == null)
                     return;
                 if (HostList.Any(it => host.EndsWith(it)) &&
@@ -289,6 +296,7 @@ namespace enigma
                     var body = await e.GetRequestBody();
                     if (body.Length == 0) return;
                     e.HttpClient.Request.KeepBody = true;
+                    Log?.Debug("Save request body {url}, {length} bytes.", url, body.Length);
 
                     return;
                 }
@@ -305,6 +313,7 @@ namespace enigma
                         tmp.timestamp = Utils.GetUTC();
                         _userInfoDict[uid] = tmp;
                     }
+                    Log?.Debug("Heart beat packet, uid = {uid}.", uid);
 
                     return;
                 }
@@ -313,6 +322,7 @@ namespace enigma
                 if (EnableBlocking)
                 {
                     e.Ok("Blocked!");
+                    Log?.Debug("Blocked {url}", url);
                 }
             }
 
@@ -325,6 +335,7 @@ namespace enigma
                 {
                     var host = e.HttpClient.Request.Host;
                     var url = e.HttpClient.Request.Url;
+                    Log?.Verbose("Response {url}", url);
 
                     if (host == null)
                         return;
@@ -334,13 +345,17 @@ namespace enigma
                         _urlList.Any(it => url.EndsWith(it)) ||
                         _specialUrlDict.Any(it => url.EndsWith(it.Key))))
                         return;// 不在要处理的列表里
+                    
+                    Log?.Information("Process {url}", url);
 
                     var requestString = await e.GetRequestBodyAsString();
                     var responseString = await e.GetResponseBodyAsString();
+                    Log?.Verbose("{url} : request = {request} , response = {response}", url, requestString,
+                        responseString);
 
                     if (UidList.Any(it => url.EndsWith(it)))
                     {
-                        GetUid(requestString,responseString);
+                        GetUid(requestString, responseString);
                         return;
                     }
 
@@ -359,17 +374,10 @@ namespace enigma
                     }
                     
                 }
-#if DEBUG
                 catch (Exception err)
                 {
-                    Console.WriteLine(err.ToString());
+                    Log?.Warning(err.ToString());
                 }
-#else
-                catch (Exception)
-                {
-                    // ignored
-                }
-#endif
             }
 
             /// <summary>
@@ -387,6 +395,7 @@ namespace enigma
                     return;
                 _userInfoDict[obj[Defines.Uid].Value<string>()] = new UserInfo(obj[Defines.Uid].Value<string>(),
                     obj[Defines.Sign].Value<string>(), Utils.GetUTC());
+                Log?.Debug("Get uid info: {uid}", _userInfoDict[obj[Defines.Uid].Value<string>()].Uid);
             }
 
             /// <summary>
@@ -449,6 +458,7 @@ namespace enigma
                 var user = GetUserInfo(request);
                 if (user == null)
                     return;
+                Log?.Information("Process Index with user {user}", user.Uid);
                 var data = Cipher.Decode(response, user.Sign);
                 if (data == "")
                     return;
@@ -482,6 +492,7 @@ namespace enigma
                 var user = GetUserInfo(parsed);
                 if (user == null)
                     return;
+                Log?.Information("Process TeamFairy with user {user}", user.Uid);
                 var body = parsed[Defines.OutDataKey];
                 var data = Cipher.Decode(body, user.Sign, false);
                 if (data == "")
@@ -506,6 +517,7 @@ namespace enigma
                 var user = GetUserInfo(parsed);
                 if (user == null)
                     return;
+                Log?.Information("Process TeamMove with user {user}", user.Uid);
                 var body = parsed[Defines.OutDataKey];
                 var data = Cipher.Decode(body, user.Sign, false);
                 if (data == "")
@@ -529,6 +541,7 @@ namespace enigma
                 var user = GetUserInfo(parsed);
                 if (user == null)
                     return;
+                Log?.Information("Process StartMission with user {user}", user.Uid);
                 var body = parsed[Defines.OutDataKey];
                 var data = Cipher.Decode(body, user.Sign, false);
                 if (data == "")
@@ -588,6 +601,8 @@ namespace enigma
                 var user = GetUserInfo(parsedReq);
                 if (user == null)
                     return;
+
+                Log?.Information("Process {rule} with user {user}", type, user.Uid);
 
                 var dataJObject = new JObject();
 
@@ -655,6 +670,7 @@ namespace enigma
 
                 #endregion
 
+                Log?.Debug("Processed {rule} with user {user}:\n{data}", type, user.Uid, dataJObject);
                 // 调用数据后处理
                 DataEvent?.Invoke(dataJObject);
             }
