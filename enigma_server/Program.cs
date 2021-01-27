@@ -19,7 +19,7 @@ namespace enigma_server
             Proxy.Instance.EnableBlocking = false;
             Proxy.Instance.Start();
 
-            Console.WriteLine(Proxy.Instance.LocalIPAddress);
+            Console.WriteLine(Proxy.Instance.LocalIPAddress + ":" + Proxy.Instance.Port);
 
             Console.ReadKey();
         }

@@ -23,16 +23,6 @@ namespace enigma
         public class Proxy
         {
             /// <summary>
-            /// sign过期时间，30分钟
-            /// </summary>
-            private static int _signExpireTime = 30 * 60 * 1000;
-            
-            /// <summary>
-            /// Request中的数据key
-            /// </summary>
-            private static string _OutDataKey = "outdatacode";
-
-            /// <summary>
             /// 单例对象
             /// </summary>
             private static readonly Proxy _instance = new Proxy();
@@ -48,22 +38,39 @@ namespace enigma
             private ProxyServer _proxyServer;
             private ProxyEndPoint _endPoint;
 
-            private class TeamInfo
+            /// <summary>
+            /// 妖精信息
+            /// </summary>
+            public class Fairy
             {
                 /// <summary>
-                /// 妖精类型
+                /// 妖精的id
                 /// </summary>
                 public int fairy_id;
 
+                /// <summary>
+                /// 技能等级
+                /// </summary>
+                public int skill_lv;
+
+                public Fairy(int id = 0, int lv = 0)
+                {
+                    fairy_id = id;
+                    skill_lv = lv;
+                }
+            };
+            private class TeamInfo
+            {
+
+                public Fairy fairy;
                 /// <summary>
                 /// 所在点位
                 /// </summary>
                 public int spot_id;
 
-                public TeamInfo(int fairy = 0, int spot = 0)
+                public TeamInfo()
                 {
-                    fairy_id = fairy;
-                    spot_id = spot;
+                    spot_id = 0;
                 }
             }
 
@@ -76,9 +83,9 @@ namespace enigma
                 public TeamInfo[] TeamList;
 
                 /// <summary>
-                /// 妖精列表，为id到fairy_id的对应
+                /// 妖精列表，Fairy
                 /// </summary>
-                public Dictionary<int, int> FairyDict;
+                public Dictionary<int, Fairy> FairyDict;
 
                 public UserInfo(string uid = "", string sign = "", int time = 0)
                 {
@@ -86,7 +93,9 @@ namespace enigma
                     Sign = sign;
                     timestamp = time;
                     TeamList = new TeamInfo[21]; // 直接给20个梯队位置以防以后扩容，0保留
-                    FairyDict = new Dictionary<int, int>();
+                    for(var i = 0;i < TeamList.Length;++i)
+                        TeamList[i] = new TeamInfo();
+                    FairyDict = new Dictionary<int, Fairy>();
                 }
             }
 
@@ -168,7 +177,7 @@ namespace enigma
                 _proxyServer.BeforeRequest += BeforeRequest;
                 _endPoint = new ExplicitProxyEndPoint(IPAddress.Any, 18888, false);
                 _proxyServer.AddEndPoint(_endPoint);
-                _signTimer = new Timer(_signExpireTime) {AutoReset = true, Enabled = true, Interval = _signExpireTime};
+                _signTimer = new Timer(Defines.SignExpireTime) {AutoReset = true, Enabled = true, Interval = Defines.SignExpireTime };
                 _signTimer.Elapsed += _signTimerElapsed;
                 _ruleJObject =
                     (JObject) JsonConvert.DeserializeObject(System.Text.Encoding.UTF8.GetString(Resource.DataProcess));
@@ -183,7 +192,7 @@ namespace enigma
 
                 _specialUrlDict = new Dictionary<string, ProcessDelegate>
                 {
-                    {"/Index/index", GetIndex},
+                    {"Index/index", GetIndex},
                     {"Fairy/teamFairy", TeamFairy},
                     {"Mission/teamMove", TeamMove},
                     {"Mission/startMission", StartMission}
@@ -191,7 +200,7 @@ namespace enigma
 
                 using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
                 {
-                    socket.Connect("114.114.114.114", 65530);
+                    socket.Connect(Defines.NetTestIP, 65530);
                     LocalIPAddress = socket.LocalEndPoint is IPEndPoint endPoint ? endPoint.Address.ToString() : "";
                 }
             }
@@ -205,7 +214,7 @@ namespace enigma
                 UserInfo tmp;
                 foreach (var it in _userInfoDict)
                 {
-                    if (time - it.Value.timestamp > _signExpireTime)
+                    if (time - it.Value.timestamp > Defines.SignExpireTime)
                     {
                         _userInfoDict.TryRemove(it.Key, out tmp);
                     }
@@ -272,7 +281,8 @@ namespace enigma
                 if (host == null)
                     return;
                 if (HostList.Any(it => host.EndsWith(it)) &&
-                    (_urlList.Any(it => url.EndsWith(it)) ||
+                    (UidList.Any(it => url.EndsWith(it)) ||
+                     _urlList.Any(it => url.EndsWith(it)) ||
                      _specialUrlDict.Any(it=>url.EndsWith(it.Key))))
                 {
                     // 要先在request里读取body才能保存下来
@@ -288,8 +298,7 @@ namespace enigma
                 {
                     var body = await e.GetRequestBodyAsString();
                     if (body.Length == 0) return;
-                    var parsed = HttpUtility.ParseQueryString(body);
-                    var uid = parsed["uid"];
+                    var uid = GetUidFromRequest(body);
                     if (_userInfoDict.ContainsKey(uid))
                     {
                         var tmp = _userInfoDict[uid];
@@ -321,9 +330,10 @@ namespace enigma
                         return;
                     if (HostList.All(it => !host.EndsWith(it)))
                         return; // 不在host列表里
-                    if (_urlList.All(it => !url.EndsWith(it)) &&
-                        _specialUrlDict.All(it => url.EndsWith(it.Key)))
-                        return; // 不在要处理的列表里
+                    if (!(UidList.Any(it => url.EndsWith(it)) ||
+                        _urlList.Any(it => url.EndsWith(it)) ||
+                        _specialUrlDict.Any(it => url.EndsWith(it.Key))))
+                        return;// 不在要处理的列表里
 
                     var requestString = await e.GetRequestBodyAsString();
                     var responseString = await e.GetResponseBodyAsString();
@@ -367,14 +377,16 @@ namespace enigma
             /// </summary>
             private void GetUid(string request,string response)
             {
-                var data = Cipher.DecodeDefault(request);
+                if(!response.StartsWith("#"))
+                    return;
+                var data = Cipher.DecodeDefault(response);
                 if (data == "")
                     return;
                 var obj = (JObject) JsonConvert.DeserializeObject(data);
-                if (obj == null || !obj.ContainsKey("sign") || !obj.ContainsKey("uid"))
+                if (obj == null || !obj.ContainsKey(Defines.Sign) || !obj.ContainsKey(Defines.Uid))
                     return;
-                _userInfoDict[obj["uid"].Value<string>()] = new UserInfo(obj["uid"].Value<string>(),
-                    obj["sign"].Value<string>(), Utils.GetUTC());
+                _userInfoDict[obj[Defines.Uid].Value<string>()] = new UserInfo(obj[Defines.Uid].Value<string>(),
+                    obj[Defines.Sign].Value<string>(), Utils.GetUTC());
             }
 
             /// <summary>
@@ -383,7 +395,7 @@ namespace enigma
             private string GetUidFromRequest(string request)
             {
                 var parsedReq = HttpUtility.ParseQueryString(request);
-                var uid = parsedReq["uid"];
+                var uid = parsedReq[Defines.Uid];
                 return uid;
             }
 
@@ -411,7 +423,7 @@ namespace enigma
             /// <summary>
             /// 获取解析过的request数据
             /// </summary>
-            private NameValueCollection GetParsedRequest(string request)
+            private static NameValueCollection GetParsedRequest(string request)
             {
                 var parsed = HttpUtility.ParseQueryString(request);
                 return parsed;
@@ -422,7 +434,7 @@ namespace enigma
             /// </summary>
             private UserInfo GetUserInfo(NameValueCollection parsed)
             {
-                var uid = parsed?["uid"];
+                var uid = parsed?[Defines.Uid];
                 if (uid == null || !_userInfoDict.ContainsKey(uid))
                     return null;
                 var user = _userInfoDict[uid];
@@ -437,22 +449,24 @@ namespace enigma
                 var user = GetUserInfo(request);
                 if (user == null)
                     return;
-                var data = Cipher.Decode(request, user.Sign);
+                var data = Cipher.Decode(response, user.Sign);
                 if (data == "")
                     return;
                 var index = (JObject) JsonConvert.DeserializeObject(data);
                 if (index == null)
                     return;
                 var fairy = index.Value<JObject>("fairy_with_user_info");
-                user.FairyDict = new Dictionary<int, int>();
+                user.FairyDict = new Dictionary<int, Fairy>();
                 foreach (var it in fairy)
                 {
                     var fairy_id = int.Parse(it.Value.Value<string>("fairy_id"));
-                    user.FairyDict[int.Parse(it.Key)] = fairy_id;
+                    var skill_lv = int.Parse(it.Value.Value<string>("skill_lv"));
+                    var fairy_info = new Fairy(fairy_id, skill_lv);
+                    user.FairyDict[int.Parse(it.Key)] = fairy_info;
                     var team_id = int.Parse(it.Value.Value<string>("team_id"));
                     if (team_id > 0 && team_id < user.TeamList.Length - 1)
                     {
-                        user.TeamList[team_id].fairy_id = fairy_id;
+                        user.TeamList[team_id].fairy = fairy_info;
                     }
                 }
 
@@ -468,8 +482,8 @@ namespace enigma
                 var user = GetUserInfo(parsed);
                 if (user == null)
                     return;
-                var body = parsed[_OutDataKey];
-                var data = Cipher.Decode(body, user.Sign);
+                var body = parsed[Defines.OutDataKey];
+                var data = Cipher.Decode(body, user.Sign, false);
                 if (data == "")
                     return;
                 var obj = (JObject)JsonConvert.DeserializeObject(data);
@@ -477,7 +491,7 @@ namespace enigma
                 var fairy = obj.Value<int>("fairy_with_user_id");
                 if (team_id > 0 && team_id < user.TeamList.Length - 1 && user.FairyDict.ContainsKey(fairy))
                 {
-                    user.TeamList[team_id].fairy_id = user.FairyDict[fairy];
+                    user.TeamList[team_id].fairy = user.FairyDict[fairy];
                 }
 
                 UpdateUserInfo(user);
@@ -492,8 +506,8 @@ namespace enigma
                 var user = GetUserInfo(parsed);
                 if (user == null)
                     return;
-                var body = parsed[_OutDataKey];
-                var data = Cipher.Decode(body, user.Sign);
+                var body = parsed[Defines.OutDataKey];
+                var data = Cipher.Decode(body, user.Sign, false);
                 if (data == "")
                     return;
                 var obj = (JObject)JsonConvert.DeserializeObject(data);
@@ -515,8 +529,8 @@ namespace enigma
                 var user = GetUserInfo(parsed);
                 if (user == null)
                     return;
-                var body = parsed[_OutDataKey];
-                var data = Cipher.Decode(body, user.Sign);
+                var body = parsed[Defines.OutDataKey];
+                var data = Cipher.Decode(body, user.Sign, false);
                 if (data == "")
                     return;
                 var obj = (JObject)JsonConvert.DeserializeObject(data);
@@ -579,7 +593,7 @@ namespace enigma
 
                 while (true)
                 {
-                    var outCode = parsedReq[_OutDataKey];
+                    var outCode = parsedReq[Defines.OutDataKey];
                     if (outCode == null)
                         break;
                     var data = Cipher.Decode(outCode, user.Sign, false);
@@ -622,6 +636,24 @@ namespace enigma
                 dataJObject["timestamp"] = Utils.GetUTC();
 
                 UpdateUserInfo(user);
+
+                #region 数据特殊处理
+
+                // 处理妖精信息
+                if (type == "Mission/battleFinish" && dataJObject.Value<bool>("use_fairy_skill"))
+                {
+                    var spot_id = dataJObject.Value<int>("spot_id");
+                    // 记录使用的妖精的信息
+                    foreach (var team in user.TeamList)
+                    {
+                        if (team.spot_id != spot_id) continue;
+                        dataJObject[Defines.FairySkillLvKey] = team.fairy.skill_lv;
+                        dataJObject[Defines.UseFairyIdKey] = team.fairy.fairy_id;
+                        break;
+                    }
+                }
+
+                #endregion
 
                 // 调用数据后处理
                 DataEvent?.Invoke(dataJObject);

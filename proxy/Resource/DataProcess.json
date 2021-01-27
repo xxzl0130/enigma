@@ -63,7 +63,10 @@
             ],
             "use_fairy_skill": [
                 "use_fairy_skill"
-            ]
+            ],
+            "spot_id": [
+                "spot_id"
+            ] 
         },
         "response": {
             "enemy": [
