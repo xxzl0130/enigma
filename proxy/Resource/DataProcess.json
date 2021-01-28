@@ -90,9 +90,6 @@
     },
     "Equip/produceDevelop": {
         "request": {
-            "build_slot": [
-                "build_slot"
-            ],
             "formula_id": [
                 "recommended_formula_id"
             ]

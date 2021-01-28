@@ -3,6 +3,11 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>enigma</RootNamespace>
+    <Authors>zaxs0130@gmail.com</Authors>
+    <Product>enigma</Product>
+    <PackageProjectUrl>https://github.com/xxzl0130/enigma</PackageProjectUrl>
+    <Copyright>zaxs0130@gmail.com</Copyright>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
   <ItemGroup>

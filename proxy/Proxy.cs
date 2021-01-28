@@ -606,7 +606,7 @@ namespace enigma
                 Log?.Information("Process {rule} with user {user}", type, user.Uid);
 
                 var dataJObject = new JObject();
-
+                JToken reqObj = null, respObj = null;
                 while (true)
                 {
                     var outCode = parsedReq[Defines.OutDataKey];
@@ -615,7 +615,7 @@ namespace enigma
                     var data = Cipher.Decode(outCode, user.Sign, false);
                     if (data == "")
                         break;
-                    var reqObj = (JToken) JsonConvert.DeserializeObject(data);
+                    reqObj = (JToken) JsonConvert.DeserializeObject(data);
                     var reqRule = rule.Value<JObject>("request");
                     foreach (var it in reqRule)
                     {
@@ -633,7 +633,7 @@ namespace enigma
                     var respBody = Cipher.Decode(response, user.Sign);
                     if (respBody == "")
                         break;
-                    var respObj = (JToken) JsonConvert.DeserializeObject(respBody);
+                    respObj = (JToken) JsonConvert.DeserializeObject(respBody);
                     var respRule = rule.Value<JObject>("response");
                     foreach (var it in respRule)
                     {
@@ -658,6 +658,9 @@ namespace enigma
                 {
                     case "Mission/battleFinish":
                     {
+                        // 敌人没死的战斗就没有意义了
+                        if(reqObj == null || reqObj.Value<bool>("if_enemy_die") == false)
+                            return;
                         // 处理妖精信息
                         if (dataJObject.Value<bool>("use_fairy_skill"))
                         {
@@ -673,8 +676,8 @@ namespace enigma
                         }
 
                         // 拿到本轮死的enemy编号
-                        var enemy = dataJObject.Value<JArray>("died_this_section");
-                        dataJObject["died_this_section"] = enemy[enemy.Count - 1];
+                        var enemy = dataJObject.Value<JArray>("enemy");
+                        dataJObject["enemy"] = enemy[enemy.Count - 1];
 
                         // 仅保留gun_id
                         var battle_get_gun = dataJObject.Value<JArray>("battle_get_gun");
@@ -690,6 +693,12 @@ namespace enigma
                     {
                         if (!dataJObject.ContainsKey("reward_gun"))
                             break;
+                        if (!dataJObject.ContainsKey("mission_rank")) //TODO Check here
+                            return; // 中间过场的数据是不需要的，只要整场战役结束的数据
+                        if (respObj?["spot_act_info"]?[0] == null)
+                            return;
+                        // 记录一个spot_id用于查询战役
+                        dataJObject["spot_id"] = respObj["spot_act_info"][0]["spot_id"];
                         // 仅保留gun_id
                         var reward_gun = dataJObject.Value<JArray>("reward_gun");
                         var guns = new JArray();

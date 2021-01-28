@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "proxy", "proxy\proxy.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GF_CipherSharp", "GF_Decoder\GF_CipherSharp\GF_CipherSharp.csproj", "{22F7CAC0-99A0-47B5-A621-E816229CF297}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "enigma_server", "enigma_server\enigma_server.csproj", "{A57629E8-86C3-4273-9BBC-DC0E1566F993}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "enigma_server", "enigma_server\enigma_server.csproj", "{A57629E8-86C3-4273-9BBC-DC0E1566F993}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataBase", "DataBase\DataBase.csproj", "{54194A65-7912-42FE-AFB7-F353565C3498}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{A57629E8-86C3-4273-9BBC-DC0E1566F993}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A57629E8-86C3-4273-9BBC-DC0E1566F993}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A57629E8-86C3-4273-9BBC-DC0E1566F993}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54194A65-7912-42FE-AFB7-F353565C3498}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54194A65-7912-42FE-AFB7-F353565C3498}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54194A65-7912-42FE-AFB7-F353565C3498}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54194A65-7912-42FE-AFB7-F353565C3498}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
