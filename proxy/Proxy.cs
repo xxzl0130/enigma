@@ -41,7 +41,7 @@ namespace enigma
             /// <summary>
             /// 妖精信息
             /// </summary>
-            public class Fairy
+            private class Fairy
             {
                 /// <summary>
                 /// 妖精的id

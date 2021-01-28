@@ -9,4 +9,9 @@
     <Copyright>zaxs0130@gmail.com</Copyright>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Serilog" Version="2.10.0" />
+    <PackageReference Include="sqlite-net-pcl" Version="1.7.335" />
+  </ItemGroup>
+
 </Project>

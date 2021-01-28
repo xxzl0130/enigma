@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Web;
 using enigma.proxy;
+using enigma.DataBase;
 using GF_CipherSharp;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -16,13 +18,20 @@ namespace enigma_server
         static void Main(string[] args)
         {
             Proxy.Instance.Port = 18888;
-            Proxy.Instance.DataEvent += DataEvent; ;
+            Proxy.Instance.DataEvent += DataEvent;
             Proxy.Instance.EnableBlocking = false;
             Proxy.Instance.Log = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
                 .WriteTo.Console()
                 .CreateLogger();
             Proxy.Instance.Start();
+            DB.Instance.DataBasePath = "test.db";
+            DB.Instance.Log = Proxy.Instance.Log;
+            Stopwatch stw = new Stopwatch();
+            stw.Start();
+            DB.Instance.Start();
+            stw.Stop();
+            Console.WriteLine(stw.ElapsedMilliseconds);
 
             Console.WriteLine(Proxy.Instance.LocalIPAddress + ":" + Proxy.Instance.Port);
 
