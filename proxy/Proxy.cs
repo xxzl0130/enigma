@@ -589,7 +589,8 @@ namespace enigma
             /// <summary>
             /// 根据rule处理数据
             /// </summary>
-            /// <param name="e">代理数据</param>
+            /// <param name="request">请求数据</param>
+            /// <param name="response">响应数据</param>
             /// <param name="rule">规则</param>
             /// <param name="type">规则类型，也是url后缀</param>
             /// <returns></returns>
@@ -637,7 +638,6 @@ namespace enigma
                     foreach (var it in respRule)
                     {
                         var obj = ExtractObject(it.Value, respObj);
-
                         if (obj != null)
                             dataJObject[it.Key] = obj;
                     }
@@ -654,16 +654,50 @@ namespace enigma
 
                 #region 数据特殊处理
 
-                // 处理妖精信息
-                if (type == "Mission/battleFinish" && dataJObject.Value<bool>("use_fairy_skill"))
+                switch (type)
                 {
-                    var spot_id = dataJObject.Value<int>("spot_id");
-                    // 记录使用的妖精的信息
-                    foreach (var team in user.TeamList)
+                    case "Mission/battleFinish":
                     {
-                        if (team.spot_id != spot_id) continue;
-                        dataJObject[Defines.FairySkillLvKey] = team.fairy.skill_lv;
-                        dataJObject[Defines.UseFairyIdKey] = team.fairy.fairy_id;
+                        // 处理妖精信息
+                        if (dataJObject.Value<bool>("use_fairy_skill"))
+                        {
+                            var spot_id = dataJObject.Value<int>("spot_id");
+                            // 记录使用的妖精的信息
+                            foreach (var team in user.TeamList)
+                            {
+                                if (team.spot_id != spot_id) continue;
+                                dataJObject[Defines.FairySkillLvKey] = team.fairy.skill_lv;
+                                dataJObject[Defines.UseFairyIdKey] = team.fairy.fairy_id;
+                                break;
+                            }
+                        }
+
+                        // 拿到本轮死的enemy编号
+                        var enemy = dataJObject.Value<JArray>("died_this_section");
+                        dataJObject["died_this_section"] = enemy[enemy.Count - 1];
+
+                        // 仅保留gun_id
+                        var battle_get_gun = dataJObject.Value<JArray>("battle_get_gun");
+                        var guns = new JArray();
+                        foreach (var gun in battle_get_gun)
+                        {
+                            guns.Add(gun["gun_id"]);
+                        }
+                        dataJObject["battle_get_gun"] = guns;
+                        break;
+                    }
+                    case "Mission/endTurn":
+                    {
+                        if (!dataJObject.ContainsKey("reward_gun"))
+                            break;
+                        // 仅保留gun_id
+                        var reward_gun = dataJObject.Value<JArray>("reward_gun");
+                        var guns = new JArray();
+                        foreach (var gun in reward_gun)
+                        {
+                            guns.Add(gun["gun_id"]);
+                        }
+                        dataJObject["reward_gun"] = guns;
                         break;
                     }
                 }

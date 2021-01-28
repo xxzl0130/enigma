@@ -42,12 +42,6 @@
             ],
             "input_level": [
                 "input_level"
-            ],
-            "build_slot": [
-                "build_slot"
-            ],
-            "build_multi": [
-                "build_multi"
             ]
         },
         "response": {
@@ -162,12 +156,6 @@
             ],
             "input_level": [
                 "input_level"
-            ],
-            "build_slot": [
-                "build_slot"
-            ],
-            "build_multi": [
-                "build_multi"
             ]
         },
         "response": {
