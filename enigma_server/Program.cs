@@ -26,19 +26,20 @@ namespace enigma_server
                 var stw = new Stopwatch();
                 stw.Start();
                 db.DropTable<GunDevelop>();
+                db.DropTable<GunDevelopTotal>();
                 db.CreateTable<GunDevelop>();
                 var rd = new Random();
                 var gun = new GunDevelop();
-                for (var j = 0; j < 100; ++j)
+                for (var j = 0; j < 10; ++j)
                 {
                     db.BeginTransaction();
                     for (var i = 0; i < 1000; ++i)
                     {
-                        gun.part = 30 + rd.Next(0, 10);
-                        gun.ammo = 30 + rd.Next(0, 10);
-                        gun.mp = 30 + rd.Next(0, 10);
-                        gun.mre = 30 + rd.Next(0, 10);
-                        gun.gun_id = rd.Next(1, 100);
+                        gun.part = 30 + rd.Next(0, 5);
+                        gun.ammo = 30 + rd.Next(0, 5);
+                        gun.mp = 30 + rd.Next(0, 5);
+                        gun.mre = 30 + rd.Next(0, 5);
+                        gun.gun_id = rd.Next(1, 20);
                         gun.timestamp = Utils.GetUTC() + rd.Next(-100, 100);
                         db.Insert(gun);
                     }
@@ -54,6 +55,7 @@ namespace enigma_server
             Proxy.Instance.Start();
             DB.Instance.DataBasePath = "test.db";
             DB.Instance.Log = Log;
+            DB.Instance.FilterCount = 10;
             DB.Instance.Start();
 
             var timer = new Stopwatch();

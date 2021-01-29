@@ -458,7 +458,10 @@ namespace enigma
                         mre = it.mre,
                         ammo = it.ammo,
                         part = it.part,
-                        total = count
+                        total = count,
+                        from_utc = from,
+                        to_utc = to,
+                        timestamp = GetUTC()
                     };
                     foreach (var gun_id in gunList)
                     {
@@ -466,11 +469,28 @@ namespace enigma
                             $"SELECT count(*) FROM {gunTable.TableName} WHERE timestamp >= {from} AND timestamp < {to} AND mp == {it.mp} AND ammo == {it.ammo} AND mre == {it.mre} AND part == {it.part} AND gun_id = {gun_id};");
                         total.valid_rate = (double)total.valid_total / total.total;
                         var last = _db.Query<GunDevelopTotal>(
-                            $"SELECT * FROM ? WHERE mp == {gunTable.TableName} AND mp == {it.mp} AND ammo == {it.ammo} AND mre == {it.mre} AND part == {it.part} AND gun_id = {gun_id} AND from_utc == {from} AND to_utc == {to} AND gun_id = {gun_id};");
-                        total.id = last.Count > 0 ? last[0].id : 0;
-                        _db.InsertOrReplace(total);
+                            $"SELECT * FROM {gunTotalTable.TableName} WHERE mp == {it.mp} AND ammo == {it.ammo} AND mre == {it.mre} AND part == {it.part} AND from_utc == {from} AND to_utc == {to} AND gun_id = {gun_id};");
+                        total.gun_id = gun_id;
+                        if (last.Count > 0)
+                        {
+                            total.id = last[0].id;
+                            _db.InsertOrReplace(total);
+                        }
+                        else
+                        {
+                            _db.Insert(total);
+                        }
                     }
                 }
+            }
+
+            /// <summary>
+            /// 获取UTC时间戳
+            /// </summary>
+            /// <returns>UTC时间戳</returns>
+            private static int GetUTC()
+            {
+                return (int)(DateTime.Now - new DateTime(1970, 1, 1)).TotalSeconds;
             }
         }
     }
