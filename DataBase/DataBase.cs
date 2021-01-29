@@ -89,172 +89,190 @@ namespace enigma
             /// 跟proxy对接的接口，接收json object，解析数据并插入数据库
             /// </summary>
             /// <param name="data">数据</param>
-            public void ReceiveDataObject(JObject data)
+            /// <param name="typename">数据类型名称，JSON里没有的话就要提供</param>
+            public void ReceiveDataObject(JObject data, string typename = null)
             {
                 object obj = null;
                 List<object> objList = null;
-                var type = data.Value<string>("type");
+                var type = data.ContainsKey("type") ? data.Value<string>("type") : typename;
                 Log?.Information("Database receive {type}.", type);
-                switch (type)
+                try
                 {
-                    case "Gun/developGun":
+                    switch (type)
                     {
-                        // 奇数是普通建造
-                        if (data.Value<int>("build_slot") % 2 == 1)
+                        case "Gun/developGun":
                         {
-                            obj = data.ToObject<GunDevelop>();
-                        }
-                        else
-                        {
-                            obj = data.ToObject<GunDevelopHeavy>();
-                        }
-
-                        break;
-                    }
-                    case "Gun/developMultiGun":
-                    {
-                        var guns = data["gun_ids"];
-                        objList = new List<object>();
-                        foreach (var gun in guns)
-                        {
-                            var id = gun.Value<int>("id");
-                            var slot = gun.Value<int>("slot");
-                            if (slot % 2 == 1)
+                            // 奇数是普通建造
+                            if (data.Value<int>("build_slot") % 2 == 1)
                             {
-                                var tmp = data.ToObject<GunDevelop>();
-                                tmp.gun_id = id;
-                                objList.Add(tmp);
+                                obj = data.ToObject<GunDevelop>();
                             }
                             else
                             {
-                                var tmp = data.ToObject<GunDevelopHeavy>();
-                                tmp.gun_id = id;
+                                obj = data.ToObject<GunDevelopHeavy>();
+                            }
+
+                            break;
+                        }
+                        case "Gun/developMultiGun":
+                        {
+                            var guns = data["gun_ids"];
+                            objList = new List<object>();
+                            foreach (var gun in guns)
+                            {
+                                var id = gun.Value<int>("id");
+                                var slot = gun.Value<int>("slot");
+                                if (slot % 2 == 1)
+                                {
+                                    var tmp = data.ToObject<GunDevelop>();
+                                    tmp.gun_id = id;
+                                    objList.Add(tmp);
+                                }
+                                else
+                                {
+                                    var tmp = data.ToObject<GunDevelopHeavy>();
+                                    tmp.gun_id = id;
+                                    objList.Add(tmp);
+                                }
+                            }
+
+                            break;
+                        }
+                        case "Mission/battleFinish":
+                        {
+                            var tmp = data.ToObject<MissionBattle>();
+                            if (data.ContainsKey("battle_get_gun"))
+                            {
+                                var guns = data.Value<JArray>("battle_get_gun");
+                                if (guns.Count > 0)
+                                {
+                                    tmp.gun_id = guns[0].Value<int>();
+                                }
+
+                                if (guns.Count > 1)
+                                {
+                                    tmp.gun_id_extra = guns[1].Value<int>();
+                                }
+                            }
+
+                            if (data.ContainsKey("battle_get_equip"))
+                            {
+                                var equips = data.Value<JArray>("battle_get_equip");
+                                if (equips.Count > 0)
+                                {
+                                    tmp.equip_id = equips[0].Value<int>();
+                                }
+
+                                if (equips.Count > 1)
+                                {
+                                    tmp.equip_id_extra = equips[1].Value<int>();
+                                }
+                            }
+
+                            _enemy2mission.TryGetValue(tmp.enemy, out var mission_id);
+                            tmp.mission_id = mission_id;
+                            obj = tmp;
+                            break;
+                        }
+                        case "Mission/endTurn":
+                        {
+                            var tmp = data.ToObject<MissionFinish>();
+                            if (data.ContainsKey("reward_equip"))
+                            {
+                                var equips = data.Value<JArray>("reward_equip");
+                                if (equips.Count > 0)
+                                {
+                                    tmp.equip_id = equips[0].Value<int>();
+                                }
+
+                                if (equips.Count > 1)
+                                {
+                                    tmp.equip_id_extra = equips[1].Value<int>();
+                                }
+                            }
+
+                            if (data.ContainsKey("reward_gun"))
+                            {
+                                var guns = data.Value<JArray>("reward_gun");
+                                if (guns.Count > 0)
+                                {
+                                    tmp.gun_id = guns[0].Value<int>();
+                                }
+
+                                if (guns.Count > 1)
+                                {
+                                    tmp.gun_id_extra = guns[1].Value<int>();
+                                }
+                            }
+
+                            _spot2mission.TryGetValue(tmp.spot_id, out var mission_id);
+                            tmp.mission_id = mission_id;
+                            obj = tmp;
+                            break;
+                        }
+                        case "Equip/produceDevelop":
+                        {
+                            objList = new List<object>();
+                            var equips = data.Value<JArray>("equips");
+                            foreach (var equip in equips)
+                            {
+                                var tmp = data.ToObject<EquipProduce>();
+                                tmp.equip_id = equip.Value<int>();
                                 objList.Add(tmp);
                             }
-                        }
-                        break;
-                    }
-                    case "Mission/battleFinish":
-                    {
-                        var tmp = data.ToObject<MissionBattle>();
-                        if (data.ContainsKey("battle_get_gun"))
-                        {
-                            var guns = data.Value<JArray>("battle_get_gun");
-                            if (guns.Count > 0)
-                            {
-                                tmp.gun_id = guns[0].Value<int>();
-                            }
-                            if (guns.Count > 1)
-                            {
-                                tmp.gun_id_extra = guns[1].Value<int>();
-                            }
-                        }
-                        if (data.ContainsKey("battle_get_equip"))
-                        {
-                            var equips = data.Value<JArray>("battle_get_equip");
-                            if (equips.Count > 0)
-                            {
-                                tmp.equip_id = equips[0].Value<int>();
-                            }
-                            if (equips.Count > 1)
-                            {
-                                tmp.equip_id_extra = equips[1].Value<int>();
-                            }
-                        }
 
-                        _enemy2mission.TryGetValue(tmp.enemy, out var mission_id);
-                        tmp.mission_id = mission_id;
-                        obj = tmp;
-                        break;
-                    }
-                    case "Mission/endTurn":
-                    {
-                        var tmp = data.ToObject<MissionFinish>();
-                        if (data.ContainsKey("reward_equip"))
-                        {
-                            var equips = data.Value<JArray>("reward_equip");
-                            if (equips.Count > 0)
-                            {
-                                tmp.equip_id = equips[0].Value<int>();
-                            }
-                            if (equips.Count > 1)
-                            {
-                                tmp.equip_id_extra = equips[1].Value<int>();
-                            }
+                            break;
                         }
-                        if (data.ContainsKey("reward_gun"))
+                        case "Equip/develop":
                         {
-                            var guns = data.Value<JArray>("reward_gun");
-                            if (guns.Count > 0)
+                            if (data.Value<int>("build_slot") % 2 == 1)
                             {
-                                tmp.gun_id = guns[0].Value<int>();
-                            }
-                            if (guns.Count > 1)
-                            {
-                                tmp.gun_id_extra = guns[1].Value<int>();
-                            }
-                        }
-
-                        _spot2mission.TryGetValue(tmp.spot_id, out var mission_id);
-                        tmp.mission_id = mission_id;
-                        obj = tmp;
-                        break;
-                    }
-                    case "Equip/produceDevelop":
-                    {
-                        objList = new List<object>();
-                        var equips = data.Value<JArray>("equips");
-                        foreach (var equip in equips)
-                        {
-                            var tmp = data.ToObject<EquipProduce>();
-                            tmp.equip_id = equip.Value<int>();
-                            objList.Add(tmp);
-                        }
-                        break;
-                    }
-                    case "Equip/develop":
-                    {
-                        if (data.Value<int>("build_slot") % 2 == 1)
-                        {
-                            obj = data.ToObject<EquipDevelop>();
-                        }
-                        else
-                        {
-                            obj = data.ToObject<EquipDevelopHeavy>();
-                        }
-                        break;
-                    }
-                    case "Equip/developMulti":
-                    {
-                        objList = new List<object>();
-                        var equips = data.Value<JArray>("equip_ids");
-                        var basic = data.ToObject<EquipDevelopHeavy>(); // 获取基础信息
-                        foreach (var equip in equips)
-                        {
-                            if (equip["slot"].Value<int>() % 2 == 1)
-                            {
-                                var tmp = equip["info"].ToObject<EquipDevelop>();
-                                tmp.timestamp = basic.timestamp;
-                                tmp.mp = basic.mp;
-                                tmp.ammo = basic.ammo;
-                                tmp.mre = basic.mre;
-                                tmp.part = basic.part;
-                                objList.Add(tmp);
+                                obj = data.ToObject<EquipDevelop>();
                             }
                             else
                             {
-                                var tmp = equip["info"].ToObject<EquipDevelopHeavy>();
-                                tmp.timestamp = basic.timestamp;
-                                tmp.mp = basic.mp;
-                                tmp.ammo = basic.ammo;
-                                tmp.mre = basic.mre;
-                                tmp.part = basic.part;
-                                tmp.input_level = basic.input_level;
-                                objList.Add(tmp);
+                                obj = data.ToObject<EquipDevelopHeavy>();
                             }
+
+                            break;
                         }
-                        break;
+                        case "Equip/developMulti":
+                        {
+                            objList = new List<object>();
+                            var equips = data.Value<JArray>("equip_ids");
+                            var basic = data.ToObject<EquipDevelopHeavy>(); // 获取基础信息
+                            foreach (var equip in equips)
+                            {
+                                if (equip["slot"].Value<int>() % 2 == 1)
+                                {
+                                    var tmp = equip["info"].ToObject<EquipDevelop>();
+                                    tmp.timestamp = basic.timestamp;
+                                    tmp.mp = basic.mp;
+                                    tmp.ammo = basic.ammo;
+                                    tmp.mre = basic.mre;
+                                    tmp.part = basic.part;
+                                    objList.Add(tmp);
+                                }
+                                else
+                                {
+                                    var tmp = equip["info"].ToObject<EquipDevelopHeavy>();
+                                    tmp.timestamp = basic.timestamp;
+                                    tmp.mp = basic.mp;
+                                    tmp.ammo = basic.ammo;
+                                    tmp.mre = basic.mre;
+                                    tmp.part = basic.part;
+                                    tmp.input_level = basic.input_level;
+                                    objList.Add(tmp);
+                                }
+                            }
+
+                            break;
+                        }
                     }
+                }
+                catch (Exception e)
+                {
+                    Log?.Warning("Error during insert data : {0}", e.ToString());
                 }
 
                 if (obj != null)
@@ -278,6 +296,69 @@ namespace enigma
             public Task ReceiveDataObjectAsync(JObject data)
             {
                 return Task.Factory.StartNew(() => { ReceiveDataObject(data); });
+            }
+
+            /// <summary>
+            /// 批量导入数据
+            /// </summary>
+            /// <param name="data">JSON格式数据，每个key对应一个type，包含一个array</param>
+            public void ImportData(JObject data)
+            {
+                foreach (var it in data)
+                {
+                    _db.BeginTransaction();
+                    foreach (var obj in it.Value)
+                    {
+                        ReceiveDataObject(obj.Value<JObject>(),it.Key);
+                    }
+                    _db.Commit();
+                }
+            }
+
+            /// <summary>
+            /// 批量导入数据
+            /// </summary>
+            /// <param name="data">JSON格式数据，每个key对应一个type，包含一个array</param>
+            public Task ImportDataAsync(JObject data)
+            {
+                return Task.Factory.StartNew(() => ImportData(data));
+            }
+
+            /// <summary>
+            /// 导出一段时间的数据
+            /// </summary>
+            /// <param name="from">开始时间戳</param>
+            /// <param name="to">结束时间戳</param>
+            /// <returns>数据</returns>
+            public JObject ExportData(int from, int to)
+            {
+                JObject data = new JObject();
+
+                var list = new List<object>();
+                list.AddRange(Query<GunDevelop>(from, to));
+                list.AddRange(Query<GunDevelopHeavy>(from, to));
+                data["Gun/developGun"] = JsonConvert.SerializeObject(list);
+                data["Mission/battleFinish"] = JsonConvert.SerializeObject(Query<MissionBattle>(from, to));
+                data["Mission/endTurn"] = JsonConvert.SerializeObject(Query<MissionFinish>(from, to));
+                data["Equip/produceDevelop"] = JsonConvert.SerializeObject(Query<EquipProduce>(from, to));
+
+                list = new List<object>();
+                list.AddRange(Query<EquipDevelop>(from, to));
+                list.AddRange(Query<EquipDevelopHeavy>(from, to));
+                data["Equip/develop"] = JsonConvert.SerializeObject(list);
+
+                return data;
+            }
+
+            /// <summary>
+            /// 导出一段时间的数据
+            /// </summary>
+            /// <param name="from">开始时间戳</param>
+            /// <param name="to">结束时间戳</param>
+            /// <returns>数据</returns>
+            public Task<JObject> ExportDataAsync(int from, int to)
+            {
+                return Task<JObject>.Factory.StartNew(() => ExportData(from, to));
             }
 
             /// <summary>
@@ -365,14 +446,14 @@ namespace enigma
                 {
                     // 该公式的总数
                     var count = _db.ExecuteScalar<int>(
-                        "SELECT count(*) FROM ? WHERE mp == ? AND ammo == ? AND mre == ? AND part == ? AND timestamp >= ? AND timestamp < ?;",
-                        gunTable.TableName, it.mp, it.ammo, it.mre, it.part, from, to);
+                        "SELECT count(*) FROM ? WHERE timestamp >= ? AND timestamp < ? AND mp == ? AND ammo == ? AND mre == ? AND part == ?;",
+                        gunTable.TableName, from, to, it.mp, it.ammo, it.mre, it.part);
                     if(count < FilterCount) // 筛掉数量太少的
                         continue;
                     // 获取不重复的gun_id列表
                     var gunList = _db.QueryScalars<int>(
-                        "SELECT DISTINCT gun_id FROM ? WHERE mp == ? AND ammo == ? AND mre == ? AND part == ? AND timestamp >= ? AND timestamp < ?;",
-                        gunTable.TableName, it.mp, it.ammo, it.mre, it.part, from, to);
+                        "SELECT DISTINCT gun_id FROM ? WHERE timestamp >= ? AND timestamp < ? AND mp == ? AND ammo == ? AND mre == ? AND part == ?;",
+                        gunTable.TableName, from, to, it.mp, it.ammo, it.mre, it.part);
 
                     var total = new GunDevelopTotal
                     {
@@ -385,8 +466,8 @@ namespace enigma
                     foreach (var gun_id in gunList)
                     {
                         total.valid_total = _db.ExecuteScalar<int>(
-                            "SELECT count(*) FROM ? WHERE mp == ? AND ammo == ? AND mre == ? AND part == ? AND timestamp >= ? AND timestamp < ? AND gun_id = ?;",
-                            gunTable.TableName, it.mp, it.ammo, it.mre, it.part, from, to, gun_id);
+                            "SELECT count(*) FROM ? WHERE timestamp >= ? AND timestamp < ? AND mp == ? AND ammo == ? AND mre == ? AND part == ? AND gun_id = ?;",
+                            gunTable.TableName, from, to, it.mp, it.ammo, it.mre, it.part, gun_id);
                         total.valid_rate = (double)total.valid_total / total.total;
                         var last = _db.Query<GunDevelopTotal>(
                             "SELECT * FROM ? WHERE mp == ? AND ammo == ? AND mre == ? AND part == ? AND from_utc == ? AND to_utc == ? AND gun_id = ?;",
