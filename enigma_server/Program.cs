@@ -21,7 +21,7 @@ namespace enigma_server
             Proxy.Instance.DataEvent += DataEvent;
             Proxy.Instance.EnableBlocking = false;
             Proxy.Instance.Log = new LoggerConfiguration()
-                .MinimumLevel.Verbose()
+                .MinimumLevel.Debug()
                 .WriteTo.Console()
                 .CreateLogger();
             Proxy.Instance.Start();

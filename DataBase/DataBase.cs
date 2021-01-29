@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -65,6 +66,11 @@ namespace enigma
                 _db.CreateTable<DevelopHeavyEquip>();
                 _db.CreateTable<BattleFinish>();
                 _db.CreateTable<MissionFinish>();
+
+                // debug log
+                _db.Trace = true;
+                _db.TimeExecution = true;
+                _db.Tracer = s => Log?.Debug(s);
             }
 
             /// <summary>
@@ -264,6 +270,73 @@ namespace enigma
             public Task ReceiveDataObjectAsync(JObject data)
             {
                 return Task.Factory.StartNew(() => { ReceiveDataObject(data); });
+            }
+
+            /// <summary>
+            /// 查询一段时间内的数据
+            /// </summary>
+            /// <typeparam name="T">类型</typeparam>
+            /// <param name="fromUTC">开始时间</param>
+            /// <param name="toUTC">结束时间</param>
+            /// <returns>结果</returns>
+            public List<T> Query<T>(int fromUTC, int toUTC) where T : RecordBase, new()
+            {
+                Log?.Debug("Query {name} from {from} to {to}.", typeof(T).Name, fromUTC, toUTC);
+                return Query<T>(v => v.timestamp >= fromUTC && v.timestamp <= toUTC);
+            }
+
+            /// <summary>
+            /// 查询一段时间内的数据，异步
+            /// </summary>
+            /// <typeparam name="T">类型</typeparam>
+            /// <param name="fromUTC">开始时间</param>
+            /// <param name="toUTC">结束时间</param>
+            /// <returns>结果</returns>
+            public Task<List<T>> QueryAsync<T>(int fromUTC, int toUTC) where T : RecordBase, new()
+            {
+                return Task<List<T>>.Factory.StartNew(() => Query<T>(fromUTC, toUTC));
+            }
+
+            /// <summary>
+            /// 根据自定义规则查询数据
+            /// </summary>
+            /// <typeparam name="T">数据类型</typeparam>
+            /// <param name="expression">规则表达式</param>
+            /// <returns>数据结果</returns>
+            public List<T> Query<T>(Expression<Func<T,bool>> expression) where T : RecordBase, new()
+            {
+                return _db.Table<T>().Where(expression).ToList();
+            }
+
+            /// <summary>
+            /// 根据自定义规则查询数据，异步
+            /// </summary>
+            /// <typeparam name="T">数据类型</typeparam>
+            /// <param name="expression">规则表达式</param>
+            /// <returns>数据结果</returns>
+            public Task<List<T>> QueryAsync<T>(Expression<Func<T, bool>> expression) where T : RecordBase, new()
+            {
+                return Task<List<T>>.Factory.StartNew(() => Query<T>(expression));
+            }
+
+            /// <summary>
+            /// 备份数据库
+            /// </summary>
+            /// <param name="backDataBasePath">备份路径</param>
+            public void Backup(string backDataBasePath)
+            {
+                Log?.Information("Backup database to {path}.", backDataBasePath);
+                _db.Backup(backDataBasePath);
+                Log?.Information("Database backup complete.");
+            }
+
+            /// <summary>
+            /// 备份数据库异步
+            /// </summary>
+            /// <param name="backDataBasePath">备份路径</param>
+            public Task BackupAsync(string backDataBasePath)
+            {
+                return Task.Factory.StartNew(() => { Backup(backDataBasePath); });
             }
         }
     }

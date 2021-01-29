@@ -9,13 +9,8 @@ namespace enigma
     {
         // SQLite里的列必须是属性
 
-        /// <summary>
-        /// 普通建造枪
-        /// </summary>
-        [Table("GunDevelop")] // 表名调整为按类型统一开头，下同
-        public class DevelopGun
+        public class RecordBase
         {
-            [PrimaryKey, AutoIncrement] public int id { get; set; }
 
             /// <summary>
             /// 用户uid
@@ -26,6 +21,15 @@ namespace enigma
             /// 时间戳
             /// </summary>
             public int timestamp { get; set; }
+        }
+
+        /// <summary>
+        /// 普通建造枪
+        /// </summary>
+        [Table("GunDevelop")] // 表名调整为按类型统一开头，下同
+        public class DevelopGun : RecordBase
+        {
+            [PrimaryKey, AutoIncrement] public int id { get; set; }
 
             /// <summary>
             /// 人力
@@ -57,20 +61,10 @@ namespace enigma
         /// 重型建造枪
         /// </summary>
         [Table("GunDevelopHeavy")]
-        public class DevelopHeavyGun
+        public class DevelopHeavyGun : RecordBase
         {
             [PrimaryKey, AutoIncrement] public int id { get; set; }
-
-            /// <summary>
-            /// 用户uid
-            /// </summary>
-            public string uid { get; set; }
-
-            /// <summary>
-            /// 时间戳
-            /// </summary>
-            public int timestamp { get; set; }
-
+            
             /// <summary>
             /// 人力
             /// </summary>
@@ -106,19 +100,9 @@ namespace enigma
         /// 推荐公式建造装备
         /// </summary>
         [Table("EquipProduce")]
-        public class ProduceEquip
+        public class ProduceEquip : RecordBase
         {
             [PrimaryKey, AutoIncrement] public int id { get; set; }
-
-            /// <summary>
-            /// 用户uid
-            /// </summary>
-            public string uid { get; set; }
-
-            /// <summary>
-            /// 时间戳
-            /// </summary>
-            public int timestamp { get; set; }
 
             /// <summary>
             /// 公式id
@@ -135,19 +119,9 @@ namespace enigma
         /// 普通建造装备
         /// </summary>
         [Table("EquipDevelop")]
-        public class DevelopEquip
+        public class DevelopEquip : RecordBase
         {
             [PrimaryKey, AutoIncrement] public int id { get; set; }
-
-            /// <summary>
-            /// 用户uid
-            /// </summary>
-            public string uid { get; set; }
-
-            /// <summary>
-            /// 时间戳
-            /// </summary>
-            public int timestamp { get; set; }
 
             /// <summary>
             /// 人力
@@ -179,19 +153,9 @@ namespace enigma
         /// 装备重型建造
         /// </summary>
         [Table("EquipDevelopHeavy")]
-        public class DevelopHeavyEquip
+        public class DevelopHeavyEquip : RecordBase
         {
             [PrimaryKey, AutoIncrement] public int id { get; set; }
-
-            /// <summary>
-            /// 用户uid
-            /// </summary>
-            public string uid { get; set; }
-
-            /// <summary>
-            /// 时间戳
-            /// </summary>
-            public int timestamp { get; set; }
 
             /// <summary>
             /// 人力
@@ -243,19 +207,9 @@ namespace enigma
         /// 一场战斗结束的数据
         /// </summary>
         [Table("MissionBattle")]
-        public class BattleFinish
+        public class BattleFinish : RecordBase
         {
             [PrimaryKey, AutoIncrement] public int id { get; set; }
-
-            /// <summary>
-            /// 用户uid
-            /// </summary>
-            public string uid { get; set; }
-
-            /// <summary>
-            /// 时间戳
-            /// </summary>
-            public int timestamp { get; set; }
 
             /// <summary>
             /// 杀死的敌人编号
@@ -312,19 +266,9 @@ namespace enigma
         /// 整场战役结束的信息
         /// </summary>
         [Table("MissionFinish")]
-        public class MissionFinish
+        public class MissionFinish : RecordBase
         {
             [PrimaryKey, AutoIncrement] public int id { get; set; }
-
-            /// <summary>
-            /// 用户uid
-            /// </summary>
-            public string uid { get; set; }
-
-            /// <summary>
-            /// 时间戳
-            /// </summary>
-            public int timestamp { get; set; }
 
             /// <summary>
             /// 战役id
