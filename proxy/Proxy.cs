@@ -679,14 +679,32 @@ namespace enigma
                         var enemy = dataJObject.Value<JArray>("enemy");
                         dataJObject["enemy"] = enemy[enemy.Count - 1];
 
-                        // 仅保留gun_id
-                        var battle_get_gun = dataJObject.Value<JArray>("battle_get_gun");
-                        var guns = new JArray();
-                        foreach (var gun in battle_get_gun)
+                        if (dataJObject.ContainsKey("battle_get_gun"))
                         {
-                            guns.Add(gun["gun_id"]);
+                            // 仅保留gun_id
+                            var battle_get_gun = dataJObject.Value<JArray>("battle_get_gun");
+                            var guns = new JArray();
+                            foreach (var gun in battle_get_gun)
+                            {
+                                guns.Add(gun["gun_id"]);
+                            }
+
+                            dataJObject["battle_get_gun"] = guns;
                         }
-                        dataJObject["battle_get_gun"] = guns;
+
+                        if (dataJObject.ContainsKey("battle_get_equip"))
+                        {
+                            // 仅保留equip_id
+                            var battle_get_equip = dataJObject.Value<JArray>("battle_get_equip");
+                            var equips = new JArray();
+                            foreach (var equip in battle_get_equip)
+                            {
+                                equips.Add(equip["equip_id"]);
+                            }
+
+                            dataJObject["battle_get_equip"] = equips;
+                        }
+
                         break;
                     }
                     case "Mission/endTurn":

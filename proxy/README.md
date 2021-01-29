@@ -38,6 +38,7 @@ value中分为request和response，对应http请求的两个部分。其中由�
 战斗结束的请求，`use_fairy_skill`只是一个bool，没有具体妖精信息，需要额外记录。  
 `died_this_section`中是从头记录了所有死亡的敌人，需要读取数组最后一个。  
 `battle_get_gun`为获得的枪的列表，可能为空。  
+`battle_get_equip`为获得的装备列表，可能为空。  
 `battle_rank`的5为S胜，4为A胜。  
 请求示例：
 ```json
@@ -79,6 +80,73 @@ value中分为request和response，对应http请求的两个部分。其中由�
     "gun_life": [],
     "squad_exp": [],
     "battle_rank": "5"
+}
+```
+夜战响应示例：
+```json
+{
+    "night_enemy": [],
+    "night_ally": [],
+    "can_see_spots": [
+        "7074"
+    ],
+    "died_this_section": {
+        "enemy": [
+            "1988"
+        ],
+        "ally": []
+    },
+    "spot_act_info": [
+        {
+            "enemy_team_id": "0",
+            "boss_hp": "0",
+            "enemy_hp_percent": "1",
+            "enemy_birth_turn": "999",
+            "enemy_ai": "0",
+            "enemy_ai_para": "",
+            "spot_id": "7074",
+            "belong": "3",
+            "if_random": "0",
+            "seed": 5463,
+            "team_id": "6",
+            "sangvis_team_id": "0",
+            "enemy_instance_id": "0",
+            "ally_instance_ids": [],
+            "squad_instance_ids": [],
+            "hostage_id": "0",
+            "hostage_hp": "0",
+            "hostage_max_hp": "0",
+            "reinforce_count": "0",
+            "supply_count": "0"
+        }
+    ],
+    "battle_get_equip": [
+        {
+            "id": "82323528",
+            "user_id": "1563276",
+            "gun_with_user_id": "0",
+            "equip_id": "64",
+            "equip_exp": "0",
+            "equip_level": "0",
+            "pow": "0",
+            "hit": "0",
+            "dodge": "4289",
+            "speed": "0",
+            "rate": "0",
+            "critical_harm_rate": "0",
+            "critical_percent": "3662",
+            "armor_piercing": "0",
+            "armor": "0",
+            "shield": "0",
+            "damage_amplify": "0",
+            "damage_reduction": "0",
+            "night_view_percent": "0",
+            "bullet_number_up": "0",
+            "adjust_count": "0",
+            "is_locked": "0",
+            "last_adjust": ""
+        }
+    ]
 }
 ```
 
