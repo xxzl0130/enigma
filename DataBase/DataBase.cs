@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -30,7 +31,21 @@ namespace enigma
             /// </summary>
             public string DataBasePath = "data.db";
 
-            private SQLiteConnection _db = null;
+            private SQLiteConnection _db;
+
+            /// <summary>
+            /// spot_id到mission_id的映射，由提取好的数据库导入
+            /// </summary>
+            private static Dictionary<int, int> _spot2mission =
+                JsonConvert.DeserializeObject<Dictionary<int, int>>(
+                    System.Text.Encoding.UTF8.GetString(Resource.spot2mission));
+
+            /// <summary>
+            /// enemy_id到mission_id的映射，由提取好的数据库导入
+            /// </summary>
+            private static Dictionary<int, int> _enemy2mission = 
+                JsonConvert.DeserializeObject<Dictionary<int, int>>(
+                System.Text.Encoding.UTF8.GetString(Resource.enemy2mission));
 
             /// <summary>
             /// 启动数据库运行
@@ -102,7 +117,7 @@ namespace enigma
                         break;
                     }
                     case "Mission/battleFinish":
-                    {//TODO 处理mission id
+                    {
                         var tmp = data.ToObject<BattleFinish>();
                         if (data.ContainsKey("battle_get_gun"))
                         {
@@ -129,6 +144,9 @@ namespace enigma
                             }
                         }
 
+                        int mission_id = 0;
+                        _enemy2mission.TryGetValue(tmp.enemy, out mission_id);
+                        tmp.mission_id = mission_id;
                         obj = tmp;
                         break;
                     }
@@ -160,6 +178,9 @@ namespace enigma
                             }
                         }
 
+                        int mission_id = 0;
+                        _spot2mission.TryGetValue(tmp.spot_id, out mission_id);
+                        tmp.mission_id = mission_id;
                         obj = tmp;
                         break;
                     }

@@ -355,6 +355,10 @@ namespace enigma
             /// 获得的装备id
             /// </summary>
             public int equip_id_extra { get; set; }
+            /// <summary>
+            /// 备用，以免数据没有及时更新时查不到mission_id
+            /// </summary>
+            public int spot_id { get; set; }
         }
     }
 }
