@@ -66,7 +66,7 @@ namespace enigma
             /// 使用的妖精的技能等级
             /// </summary>
             public const string FairySkillLvKey = "fairy_skill_lv";
-            
+
             /// <summary>
             /// 使用的妖精的id
             /// </summary>

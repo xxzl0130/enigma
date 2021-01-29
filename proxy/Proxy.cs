@@ -36,6 +36,7 @@ namespace enigma
             /// 代理服务器
             /// </summary>
             private ProxyServer _proxyServer;
+
             private ProxyEndPoint _endPoint;
 
             /// <summary>
@@ -59,10 +60,11 @@ namespace enigma
                     skill_lv = lv;
                 }
             };
+
             private class TeamInfo
             {
-
                 public Fairy fairy;
+
                 /// <summary>
                 /// 所在点位
                 /// </summary>
@@ -93,7 +95,7 @@ namespace enigma
                     Sign = sign;
                     timestamp = time;
                     TeamList = new TeamInfo[21]; // 直接给20个梯队位置以防以后扩容，0保留
-                    for(var i = 0;i < TeamList.Length;++i)
+                    for (var i = 0; i < TeamList.Length; ++i)
                         TeamList[i] = new TeamInfo();
                     FairyDict = new Dictionary<int, Fairy>();
                 }
@@ -118,12 +120,14 @@ namespace enigma
             /// 要处理的url列表，从rule的json的key列表读取
             /// </summary>
             private List<string> _urlList;
+
             /// <summary>
             /// 处理数据的函数的代理定义
             /// </summary>
             /// <param name="request">请求字符串</param>
             /// <param name="response">回复字符串</param>
             private delegate void ProcessDelegate(string request, string response);
+
             /// <summary>
             /// 要特殊处理的url以及对应函数的字典
             /// </summary>
@@ -182,7 +186,8 @@ namespace enigma
                 _proxyServer.BeforeRequest += BeforeRequest;
                 _endPoint = new ExplicitProxyEndPoint(IPAddress.Any, 18888, false);
                 _proxyServer.AddEndPoint(_endPoint);
-                _signTimer = new Timer(Defines.SignExpireTime) {AutoReset = true, Enabled = true, Interval = Defines.SignExpireTime };
+                _signTimer = new Timer(Defines.SignExpireTime)
+                    {AutoReset = true, Enabled = true, Interval = Defines.SignExpireTime};
                 _signTimer.Elapsed += _signTimerElapsed;
                 _ruleJObject =
                     (JObject) JsonConvert.DeserializeObject(System.Text.Encoding.UTF8.GetString(Resource.DataProcess));
@@ -290,7 +295,7 @@ namespace enigma
                 if (HostList.Any(it => host.EndsWith(it)) &&
                     (UidList.Any(it => url.EndsWith(it)) ||
                      _urlList.Any(it => url.EndsWith(it)) ||
-                     _specialUrlDict.Any(it=>url.EndsWith(it.Key))))
+                     _specialUrlDict.Any(it => url.EndsWith(it.Key))))
                 {
                     // 要先在request里读取body才能保存下来
                     var body = await e.GetRequestBody();
@@ -313,6 +318,7 @@ namespace enigma
                         tmp.timestamp = Utils.GetUTC();
                         _userInfoDict[uid] = tmp;
                     }
+
                     Log?.Debug("Heart beat packet, uid = {uid}.", uid);
 
                     return;
@@ -342,10 +348,10 @@ namespace enigma
                     if (HostList.All(it => !host.EndsWith(it)))
                         return; // 不在host列表里
                     if (!(UidList.Any(it => url.EndsWith(it)) ||
-                        _urlList.Any(it => url.EndsWith(it)) ||
-                        _specialUrlDict.Any(it => url.EndsWith(it.Key))))
-                        return;// 不在要处理的列表里
-                    
+                          _urlList.Any(it => url.EndsWith(it)) ||
+                          _specialUrlDict.Any(it => url.EndsWith(it.Key))))
+                        return; // 不在要处理的列表里
+
                     Log?.Information("Process {url}", url);
 
                     var requestString = await e.GetRequestBodyAsString();
@@ -372,7 +378,6 @@ namespace enigma
                         ProcessData(requestString, responseString, _ruleJObject[it], it);
                         return;
                     }
-                    
                 }
                 catch (Exception err)
                 {
@@ -383,9 +388,9 @@ namespace enigma
             /// <summary>
             /// 解析sign信息并将其保存到dict中
             /// </summary>
-            private void GetUid(string request,string response)
+            private void GetUid(string request, string response)
             {
-                if(!response.StartsWith("#"))
+                if (!response.StartsWith("#"))
                     return;
                 var data = Cipher.DecodeDefault(response);
                 if (data == "")
@@ -497,7 +502,7 @@ namespace enigma
                 var data = Cipher.Decode(body, user.Sign, false);
                 if (data == "")
                     return;
-                var obj = (JObject)JsonConvert.DeserializeObject(data);
+                var obj = (JObject) JsonConvert.DeserializeObject(data);
                 var team_id = obj.Value<int>("team_id");
                 var fairy = obj.Value<int>("fairy_with_user_id");
                 if (team_id > 0 && team_id < user.TeamList.Length - 1 && user.FairyDict.ContainsKey(fairy))
@@ -522,7 +527,7 @@ namespace enigma
                 var data = Cipher.Decode(body, user.Sign, false);
                 if (data == "")
                     return;
-                var obj = (JObject)JsonConvert.DeserializeObject(data);
+                var obj = (JObject) JsonConvert.DeserializeObject(data);
                 if (obj.Value<int>("person_type") != 1)
                     return;
                 var team_id = obj.Value<int>("person_id");
@@ -546,7 +551,7 @@ namespace enigma
                 var data = Cipher.Decode(body, user.Sign, false);
                 if (data == "")
                     return;
-                var obj = (JObject)JsonConvert.DeserializeObject(data);
+                var obj = (JObject) JsonConvert.DeserializeObject(data);
                 if (!obj.ContainsKey("spots"))
                     return;
                 var spots = obj.Value<JArray>("spots");
@@ -659,7 +664,7 @@ namespace enigma
                     case "Mission/battleFinish":
                     {
                         // 敌人没死的战斗就没有意义了
-                        if(reqObj == null || reqObj.Value<bool>("if_enemy_die") == false)
+                        if (reqObj == null || reqObj.Value<bool>("if_enemy_die") == false)
                             return;
                         // 处理妖精信息
                         if (dataJObject.Value<bool>("use_fairy_skill"))
@@ -723,7 +728,7 @@ namespace enigma
                             return;
                         // 记录一个spot_id用于查询战役
                         dataJObject["spot_id"] = respObj["spot_act_info"][0]["spot_id"];
-                        
+
                         if (dataJObject["reward_gun"] != null)
                         {
                             // 仅保留equip_id
