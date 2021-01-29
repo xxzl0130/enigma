@@ -17,21 +17,50 @@ namespace enigma_server
     {
         static void Main(string[] args)
         {
-            Proxy.Instance.Port = 18888;
-            Proxy.Instance.DataEvent += DataEvent;
-            Proxy.Instance.EnableBlocking = false;
-            Proxy.Instance.Log = new LoggerConfiguration()
+            var Log = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console()
                 .CreateLogger();
+            using (var db = new SQLite.SQLiteConnection("test.db"))
+            {
+                var stw = new Stopwatch();
+                stw.Start();
+                db.DropTable<GunDevelop>();
+                db.CreateTable<GunDevelop>();
+                var rd = new Random();
+                var gun = new GunDevelop();
+                for (var j = 0; j < 100; ++j)
+                {
+                    db.BeginTransaction();
+                    for (var i = 0; i < 1000; ++i)
+                    {
+                        gun.part = 30 + rd.Next(0, 10);
+                        gun.ammo = 30 + rd.Next(0, 10);
+                        gun.mp = 30 + rd.Next(0, 10);
+                        gun.mre = 30 + rd.Next(0, 10);
+                        gun.gun_id = rd.Next(1, 100);
+                        gun.timestamp = Utils.GetUTC() + rd.Next(-100, 100);
+                        db.Insert(gun);
+                    }
+                    db.Commit();
+                }
+                stw.Stop();
+                Log.Information("生成数据完成，耗时{0}s", stw.Elapsed.TotalSeconds);
+            }
+            Proxy.Instance.Port = 18888;
+            Proxy.Instance.DataEvent += DataEvent;
+            Proxy.Instance.EnableBlocking = false;
+            Proxy.Instance.Log = Log;
             Proxy.Instance.Start();
             DB.Instance.DataBasePath = "test.db";
-            DB.Instance.Log = Proxy.Instance.Log;
-            Stopwatch stw = new Stopwatch();
-            stw.Start();
+            DB.Instance.Log = Log;
             DB.Instance.Start();
-            stw.Stop();
-            Console.WriteLine(stw.ElapsedMilliseconds);
+
+            var timer = new Stopwatch();
+            timer.Start();
+            DB.Instance.UpdateGunDevelopTotal(Utils.GetUTC() - 20,Utils.GetUTC() + 20);
+            timer.Stop();
+            Log.Information("更新数据完成，耗时{0}s", timer.Elapsed.TotalSeconds);
 
             Console.WriteLine(Proxy.Instance.LocalIPAddress + ":" + Proxy.Instance.Port);
 

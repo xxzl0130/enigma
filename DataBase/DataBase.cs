@@ -82,7 +82,7 @@ namespace enigma
                 // debug log
                 _db.Trace = true;
                 _db.TimeExecution = true;
-                _db.Tracer = s => Log?.Debug(s);
+                _db.Tracer = s => Log?.Verbose(s);
             }
 
             /// <summary>
@@ -433,27 +433,24 @@ namespace enigma
             /// </summary>
             /// <param name="from">开始时间utc时间戳</param>
             /// <param name="to">结束时间utc时间戳</param>
-            private void UpdateGunDevelopTotal(int from, int to)
+            public void UpdateGunDevelopTotal(int from, int to)
             {
                 var gunTable = _db.GetMapping<GunDevelop>();
                 var gunTotalTable = _db.GetMapping<GunDevelopTotal>();
                 // 获取不重复的公式
                 var formulaList =
                     _db.Query<GunDevelop>(
-                        "SELECT DISTINCT mp, ammo, mre, part FROM ? WHERE timestamp >= ? AND timestamp < ?;",
-                        gunTable.TableName, from, to);
+                        $"SELECT DISTINCT mp, ammo, mre, part FROM {gunTable.TableName} WHERE timestamp >= {from} AND timestamp < {to};");
                 foreach (var it in formulaList)
                 {
                     // 该公式的总数
                     var count = _db.ExecuteScalar<int>(
-                        "SELECT count(*) FROM ? WHERE timestamp >= ? AND timestamp < ? AND mp == ? AND ammo == ? AND mre == ? AND part == ?;",
-                        gunTable.TableName, from, to, it.mp, it.ammo, it.mre, it.part);
+                        $"SELECT count(*) FROM {gunTable.TableName} WHERE timestamp >= {from} AND timestamp < {to} AND mp == {it.mp} AND ammo == {it.ammo} AND mre == {it.mre} AND part == {it.part};");
                     if(count < FilterCount) // 筛掉数量太少的
                         continue;
                     // 获取不重复的gun_id列表
                     var gunList = _db.QueryScalars<int>(
-                        "SELECT DISTINCT gun_id FROM ? WHERE timestamp >= ? AND timestamp < ? AND mp == ? AND ammo == ? AND mre == ? AND part == ?;",
-                        gunTable.TableName, from, to, it.mp, it.ammo, it.mre, it.part);
+                        $"SELECT DISTINCT gun_id FROM {gunTable.TableName} WHERE timestamp >= {from} AND timestamp < {to} AND mp == {it.mp} AND ammo == {it.ammo} AND mre == {it.mre} AND part == {it.part};");
 
                     var total = new GunDevelopTotal
                     {
@@ -466,12 +463,10 @@ namespace enigma
                     foreach (var gun_id in gunList)
                     {
                         total.valid_total = _db.ExecuteScalar<int>(
-                            "SELECT count(*) FROM ? WHERE timestamp >= ? AND timestamp < ? AND mp == ? AND ammo == ? AND mre == ? AND part == ? AND gun_id = ?;",
-                            gunTable.TableName, from, to, it.mp, it.ammo, it.mre, it.part, gun_id);
+                            $"SELECT count(*) FROM {gunTable.TableName} WHERE timestamp >= {from} AND timestamp < {to} AND mp == {it.mp} AND ammo == {it.ammo} AND mre == {it.mre} AND part == {it.part} AND gun_id = {gun_id};");
                         total.valid_rate = (double)total.valid_total / total.total;
                         var last = _db.Query<GunDevelopTotal>(
-                            "SELECT * FROM ? WHERE mp == ? AND ammo == ? AND mre == ? AND part == ? AND from_utc == ? AND to_utc == ? AND gun_id = ?;",
-                            gunTable.TableName, it.mp, it.ammo, it.mre, it.part, from, to, gun_id);
+                            $"SELECT * FROM ? WHERE mp == {gunTable.TableName} AND mp == {it.mp} AND ammo == {it.ammo} AND mre == {it.mre} AND part == {it.part} AND gun_id = {gun_id} AND from_utc == {from} AND to_utc == {to} AND gun_id = {gun_id};");
                         total.id = last.Count > 0 ? last[0].id : 0;
                         _db.InsertOrReplace(total);
                     }
