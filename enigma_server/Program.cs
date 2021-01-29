@@ -40,7 +40,7 @@ namespace enigma_server
 
         private static void DataEvent(Newtonsoft.Json.Linq.JObject jsonObject)
         {
-            Console.WriteLine(jsonObject.ToString());
+            DB.Instance.ReceiveDataObjectAsync(jsonObject);
         }
     }
 }

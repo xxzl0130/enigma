@@ -711,7 +711,7 @@ namespace enigma
                         }
 
                         // 可能会在战斗中结束战役，调用战役结束处理。
-                        if (respObj?["mission_win_result"] != null)
+                        if (respObj?["mission_win_result"]?.Type == JTokenType.Object && respObj["mission_win_result"]?["rank"] != null)
                         {
                             ProcessData(request, response, _ruleJObject["Mission/endTurn"], "Mission/endTurn");
                         }
@@ -761,7 +761,7 @@ namespace enigma
 
                 #endregion
 
-                Log?.Debug("Processed {rule} with user {user}:\n{data}", type, user.Uid, dataJObject);
+                Log?.Debug("Processed {rule} with user {user}:\n{data}", type, user.Uid, dataJObject.ToString());
                 // 调用数据后处理
                 DataEvent?.Invoke(dataJObject);
             }

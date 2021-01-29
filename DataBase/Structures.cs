@@ -291,6 +291,21 @@ namespace enigma
             /// 圣捞、指挥官皮肤特效可能会多一个掉落
             /// </summary>
             public int equip_id_extra { get; set; }
+
+            /// <summary>
+            /// 是否使用妖精技能
+            /// </summary>
+            public bool use_fairy_skill { get; set; }
+
+            /// <summary>
+            /// 妖精技能等级
+            /// </summary>
+            public int fairy_skill_lv { get; set; }
+
+            /// <summary>
+            /// 使用的妖精的id
+            /// </summary>
+            public int use_fairy_id { get; set; }
         }
 
         /// <summary>
@@ -324,22 +339,22 @@ namespace enigma
             /// <summary>
             /// 获得的枪的id，原始数据里是list但是数据库里只能存单个的
             /// </summary>
-            public int reward_gun { get; set; }
+            public int gun_id { get; set; }
 
             /// <summary>
             /// 圣捞、指挥官皮肤特效可能会多一个掉落
             /// </summary>
-            public int reward_gun_extra { get; set; }
+            public int gun_id_extra { get; set; }
 
             /// <summary>
             /// 获得的装备id
             /// </summary>
-            public int reward_equip { get; set; }
+            public int equip_id { get; set; }
 
             /// <summary>
             /// 获得的装备id
             /// </summary>
-            public int reward_equip_extra { get; set; }
+            public int equip_id_extra { get; set; }
         }
     }
 }
