@@ -8,15 +8,13 @@ namespace enigma
     namespace DataBase
     {
         // SQLite里的列必须是属性
-
+        /// <summary>
+        /// 数据库记录的基础定义
+        /// </summary>
         public class RecordBase
         {
-
-            /// <summary>
-            /// 用户uid
-            /// </summary>
-            public string uid { get; set; }
-
+            [PrimaryKey, AutoIncrement] public int id { get; set; }
+            
             /// <summary>
             /// 时间戳
             /// </summary>
@@ -24,13 +22,37 @@ namespace enigma
         }
 
         /// <summary>
+        /// 统计信息公用的定义
+        /// </summary>
+        public class TotalBase
+        {
+            /// <summary>
+            /// 总数
+            /// </summary>
+            public int total { get; set; }
+
+            /// <summary>
+            /// 有效出货总数
+            /// </summary>
+            public int valid_total { get; set; }
+
+            /// <summary>
+            /// 开始时间
+            /// </summary>
+            public int from_utc { get; set; }
+
+            /// <summary>
+            /// 结束时间
+            /// </summary>
+            public int to_utc { get; set; }
+        }
+
+        /// <summary>
         /// 普通建造枪
         /// </summary>
         [Table("GunDevelop")] // 表名调整为按类型统一开头，下同
-        public class DevelopGun : RecordBase
+        public class GunDevelop : RecordBase
         {
-            [PrimaryKey, AutoIncrement] public int id { get; set; }
-
             /// <summary>
             /// 人力
             /// </summary>
@@ -58,13 +80,38 @@ namespace enigma
         }
 
         /// <summary>
+        /// 普通建造统计表
+        /// </summary>
+        [Table("GunDevelopTotal")]
+        public class GunDevelopTotal : GunDevelop
+        {
+            /// <summary>
+            /// 总数
+            /// </summary>
+            public int total { get; set; }
+
+            /// <summary>
+            /// 有效出货总数
+            /// </summary>
+            public int valid_total { get; set; }
+
+            /// <summary>
+            /// 开始时间
+            /// </summary>
+            public int from_utc { get; set; }
+
+            /// <summary>
+            /// 结束时间
+            /// </summary>
+            public int to_utc { get; set; }
+        }
+
+        /// <summary>
         /// 重型建造枪
         /// </summary>
         [Table("GunDevelopHeavy")]
-        public class DevelopHeavyGun : RecordBase
+        public class GunDevelopHeavy : RecordBase
         {
-            [PrimaryKey, AutoIncrement] public int id { get; set; }
-            
             /// <summary>
             /// 人力
             /// </summary>
@@ -97,13 +144,38 @@ namespace enigma
         }
 
         /// <summary>
+        /// 重型人型建造统计表
+        /// </summary>
+        [Table("GunDevelopHeavyTotal")]
+        public class GunDevelopHeavyTotal : GunDevelopHeavy
+        {
+            /// <summary>
+            /// 总数
+            /// </summary>
+            public int total { get; set; }
+
+            /// <summary>
+            /// 有效出货总数
+            /// </summary>
+            public int valid_total { get; set; }
+
+            /// <summary>
+            /// 开始时间
+            /// </summary>
+            public int from_utc { get; set; }
+
+            /// <summary>
+            /// 结束时间
+            /// </summary>
+            public int to_utc { get; set; }
+        }
+
+        /// <summary>
         /// 推荐公式建造装备
         /// </summary>
         [Table("EquipProduce")]
-        public class ProduceEquip : RecordBase
+        public class EquipProduce : RecordBase
         {
-            [PrimaryKey, AutoIncrement] public int id { get; set; }
-
             /// <summary>
             /// 公式id
             /// </summary>
@@ -116,13 +188,39 @@ namespace enigma
         }
 
         /// <summary>
+        /// 推荐公式建造装备统计表
+        /// </summary>
+        [Table("EquipProduceTotal")]
+        public class EquipProduceTotal : EquipProduce
+        {
+
+            /// <summary>
+            /// 总数
+            /// </summary>
+            public int total { get; set; }
+
+            /// <summary>
+            /// 有效出货总数
+            /// </summary>
+            public int valid_total { get; set; }
+
+            /// <summary>
+            /// 开始时间
+            /// </summary>
+            public int from_utc { get; set; }
+
+            /// <summary>
+            /// 结束时间
+            /// </summary>
+            public int to_utc { get; set; }
+        }
+
+        /// <summary>
         /// 普通建造装备
         /// </summary>
         [Table("EquipDevelop")]
-        public class DevelopEquip : RecordBase
+        public class EquipDevelop : RecordBase
         {
-            [PrimaryKey, AutoIncrement] public int id { get; set; }
-
             /// <summary>
             /// 人力
             /// </summary>
@@ -150,13 +248,39 @@ namespace enigma
         }
 
         /// <summary>
+        /// 普通建造装备统计表
+        /// </summary>
+        [Table("EquipDevelopTotal")]
+        public class EquipDevelopTotal : EquipDevelop
+        {
+
+            /// <summary>
+            /// 总数
+            /// </summary>
+            public int total { get; set; }
+
+            /// <summary>
+            /// 有效出货总数
+            /// </summary>
+            public int valid_total { get; set; }
+
+            /// <summary>
+            /// 开始时间
+            /// </summary>
+            public int from_utc { get; set; }
+
+            /// <summary>
+            /// 结束时间
+            /// </summary>
+            public int to_utc { get; set; }
+        }
+
+        /// <summary>
         /// 装备重型建造
         /// </summary>
         [Table("EquipDevelopHeavy")]
-        public class DevelopHeavyEquip : RecordBase
+        public class EquipDevelopHeavy : RecordBase
         {
-            [PrimaryKey, AutoIncrement] public int id { get; set; }
-
             /// <summary>
             /// 人力
             /// </summary>
@@ -204,13 +328,38 @@ namespace enigma
         }
 
         /// <summary>
+        /// 重型建造装备统计表
+        /// </summary>
+        [Table("EquipDevelopHeavyTotal")]
+        public class EquipDevelopHeavyTotal : EquipDevelopHeavy
+        {
+            /// <summary>
+            /// 总数
+            /// </summary>
+            public int total { get; set; }
+
+            /// <summary>
+            /// 有效出货总数
+            /// </summary>
+            public int valid_total { get; set; }
+
+            /// <summary>
+            /// 开始时间
+            /// </summary>
+            public int from_utc { get; set; }
+
+            /// <summary>
+            /// 结束时间
+            /// </summary>
+            public int to_utc { get; set; }
+        }
+
+        /// <summary>
         /// 一场战斗结束的数据
         /// </summary>
         [Table("MissionBattle")]
-        public class BattleFinish : RecordBase
+        public class MissionBattle : RecordBase
         {
-            [PrimaryKey, AutoIncrement] public int id { get; set; }
-
             /// <summary>
             /// 杀死的敌人编号
             /// </summary>
@@ -263,13 +412,73 @@ namespace enigma
         }
 
         /// <summary>
+        /// 战斗结束的数据统计
+        /// </summary>
+        [Table("MissionBattleTotal")]
+        public class MissionBattleTotal : RecordBase
+        {
+            /// <summary>
+            /// 杀死的敌人编号
+            /// </summary>
+            public int enemy { get; set; }
+
+            /// <summary>
+            /// 战役id
+            /// </summary>
+            public int mission_id { get; set; }
+
+            /// <summary>
+            /// 战斗等级
+            /// </summary>
+            public int battle_rank { get; set; }
+
+            /// <summary>
+            /// 获得的枪的id
+            /// </summary>
+            public int gun_id { get; set; }
+
+            /// <summary>
+            /// 获得的装备的id
+            /// </summary>
+            public int equip_id { get; set; }
+
+            /// <summary>
+            /// 是否使用Lv.10搜救妖精技能
+            /// </summary>
+            public bool use_search_fairy { get; set; }
+            
+            /// <summary>
+            /// 总数
+            /// </summary>
+            public int total { get; set; }
+
+            /// <summary>
+            /// 有效出枪总数
+            /// </summary>
+            public int gun_total { get; set; }
+
+            /// <summary>
+            /// 有效出装备总数
+            /// </summary>
+            public int equip_total { get; set; }
+
+            /// <summary>
+            /// 开始时间
+            /// </summary>
+            public int from_utc { get; set; }
+
+            /// <summary>
+            /// 结束时间
+            /// </summary>
+            public int to_utc { get; set; }
+        }
+
+        /// <summary>
         /// 整场战役结束的信息
         /// </summary>
         [Table("MissionFinish")]
         public class MissionFinish : RecordBase
         {
-            [PrimaryKey, AutoIncrement] public int id { get; set; }
-
             /// <summary>
             /// 战役id
             /// </summary>
@@ -299,10 +508,64 @@ namespace enigma
             /// 获得的装备id
             /// </summary>
             public int equip_id_extra { get; set; }
+
             /// <summary>
             /// 备用，以免数据没有及时更新时查不到mission_id
             /// </summary>
             public int spot_id { get; set; }
+        }
+
+        /// <summary>
+        /// 整场战役结束的信息统计
+        /// </summary>
+        [Table("MissionFinishTotal")]
+        public class MissionFinishTotal : RecordBase
+        {
+            /// <summary>
+            /// 战役id
+            /// </summary>
+            public int mission_id { get; set; }
+
+            /// <summary>
+            /// 战役等级
+            /// </summary>
+            public int mission_rank { get; set; }
+
+            /// <summary>
+            /// 获得的枪的id
+            /// </summary>
+            public int gun_id { get; set; }
+
+            /// <summary>
+            /// 获得的装备id
+            /// </summary>
+            public int equip_id { get; set; }
+
+
+            /// <summary>
+            /// 总数
+            /// </summary>
+            public int total { get; set; }
+
+            /// <summary>
+            /// 有效出枪总数
+            /// </summary>
+            public int gun_total { get; set; }
+
+            /// <summary>
+            /// 有效出装备总数
+            /// </summary>
+            public int equip_total { get; set; }
+
+            /// <summary>
+            /// 开始时间
+            /// </summary>
+            public int from_utc { get; set; }
+
+            /// <summary>
+            /// 结束时间
+            /// </summary>
+            public int to_utc { get; set; }
         }
     }
 }

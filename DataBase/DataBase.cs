@@ -59,13 +59,20 @@ namespace enigma
                 _db = new SQLiteConnection(DataBasePath);
 
                 // 创建表，这个库会自动处理数据结构变更和重复创建
-                _db.CreateTable<DevelopGun>();
-                _db.CreateTable<DevelopHeavyGun>();
-                _db.CreateTable<ProduceEquip>();
-                _db.CreateTable<DevelopEquip>();
-                _db.CreateTable<DevelopHeavyEquip>();
-                _db.CreateTable<BattleFinish>();
+                _db.CreateTable<GunDevelop>();
+                _db.CreateTable<GunDevelopTotal>();
+                _db.CreateTable<GunDevelopHeavy>();
+                _db.CreateTable<GunDevelopHeavyTotal>();
+                _db.CreateTable<EquipProduce>();
+                _db.CreateTable<EquipProduceTotal>();
+                _db.CreateTable<EquipDevelop>();
+                _db.CreateTable<EquipDevelopTotal>();
+                _db.CreateTable<EquipDevelopHeavy>();
+                _db.CreateTable<EquipDevelopHeavyTotal>();
+                _db.CreateTable<MissionBattle>();
+                _db.CreateTable<MissionBattleTotal>();
                 _db.CreateTable<MissionFinish>();
+                _db.CreateTable<MissionFinishTotal>();
 
                 // debug log
                 _db.Trace = true;
@@ -90,11 +97,11 @@ namespace enigma
                         // 奇数是普通建造
                         if (data.Value<int>("build_slot") % 2 == 1)
                         {
-                            obj = data.ToObject<DevelopGun>();
+                            obj = data.ToObject<GunDevelop>();
                         }
                         else
                         {
-                            obj = data.ToObject<DevelopHeavyGun>();
+                            obj = data.ToObject<GunDevelopHeavy>();
                         }
 
                         break;
@@ -109,13 +116,13 @@ namespace enigma
                             var slot = gun.Value<int>("slot");
                             if (slot % 2 == 1)
                             {
-                                var tmp = data.ToObject<DevelopGun>();
+                                var tmp = data.ToObject<GunDevelop>();
                                 tmp.gun_id = id;
                                 objList.Add(tmp);
                             }
                             else
                             {
-                                var tmp = data.ToObject<DevelopHeavyGun>();
+                                var tmp = data.ToObject<GunDevelopHeavy>();
                                 tmp.gun_id = id;
                                 objList.Add(tmp);
                             }
@@ -124,7 +131,7 @@ namespace enigma
                     }
                     case "Mission/battleFinish":
                     {
-                        var tmp = data.ToObject<BattleFinish>();
+                        var tmp = data.ToObject<MissionBattle>();
                         if (data.ContainsKey("battle_get_gun"))
                         {
                             var guns = data.Value<JArray>("battle_get_gun");
@@ -150,8 +157,7 @@ namespace enigma
                             }
                         }
 
-                        int mission_id = 0;
-                        _enemy2mission.TryGetValue(tmp.enemy, out mission_id);
+                        _enemy2mission.TryGetValue(tmp.enemy, out var mission_id);
                         tmp.mission_id = mission_id;
                         obj = tmp;
                         break;
@@ -184,8 +190,7 @@ namespace enigma
                             }
                         }
 
-                        int mission_id = 0;
-                        _spot2mission.TryGetValue(tmp.spot_id, out mission_id);
+                        _spot2mission.TryGetValue(tmp.spot_id, out var mission_id);
                         tmp.mission_id = mission_id;
                         obj = tmp;
                         break;
@@ -196,7 +201,7 @@ namespace enigma
                         var equips = data.Value<JArray>("equips");
                         foreach (var equip in equips)
                         {
-                            var tmp = data.ToObject<ProduceEquip>();
+                            var tmp = data.ToObject<EquipProduce>();
                             tmp.equip_id = equip.Value<int>();
                             objList.Add(tmp);
                         }
@@ -206,11 +211,11 @@ namespace enigma
                     {
                         if (data.Value<int>("build_slot") % 2 == 1)
                         {
-                            obj = data.ToObject<DevelopEquip>();
+                            obj = data.ToObject<EquipDevelop>();
                         }
                         else
                         {
-                            obj = data.ToObject<DevelopHeavyEquip>();
+                            obj = data.ToObject<EquipDevelopHeavy>();
                         }
                         break;
                     }
@@ -218,14 +223,13 @@ namespace enigma
                     {
                         objList = new List<object>();
                         var equips = data.Value<JArray>("equip_ids");
-                        var basic = data.ToObject<DevelopHeavyEquip>(); // 获取基础信息
+                        var basic = data.ToObject<EquipDevelopHeavy>(); // 获取基础信息
                         foreach (var equip in equips)
                         {
                             if (equip["slot"].Value<int>() % 2 == 1)
                             {
-                                var tmp = equip["info"].ToObject<DevelopEquip>();
+                                var tmp = equip["info"].ToObject<EquipDevelop>();
                                 tmp.timestamp = basic.timestamp;
-                                tmp.uid = basic.uid;
                                 tmp.mp = basic.mp;
                                 tmp.ammo = basic.ammo;
                                 tmp.mre = basic.mre;
@@ -234,9 +238,8 @@ namespace enigma
                             }
                             else
                             {
-                                var tmp = equip["info"].ToObject<DevelopHeavyEquip>();
+                                var tmp = equip["info"].ToObject<EquipDevelopHeavy>();
                                 tmp.timestamp = basic.timestamp;
-                                tmp.uid = basic.uid;
                                 tmp.mp = basic.mp;
                                 tmp.ammo = basic.ammo;
                                 tmp.mre = basic.mre;
