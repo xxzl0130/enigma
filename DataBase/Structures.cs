@@ -20,33 +20,7 @@ namespace enigma
             /// </summary>
             public int timestamp { get; set; }
         }
-
-        /// <summary>
-        /// 统计信息公用的定义
-        /// </summary>
-        public class TotalBase
-        {
-            /// <summary>
-            /// 总数
-            /// </summary>
-            public int total { get; set; }
-
-            /// <summary>
-            /// 有效出货总数
-            /// </summary>
-            public int valid_total { get; set; }
-
-            /// <summary>
-            /// 开始时间
-            /// </summary>
-            public int from_utc { get; set; }
-
-            /// <summary>
-            /// 结束时间
-            /// </summary>
-            public int to_utc { get; set; }
-        }
-
+        
         /// <summary>
         /// 普通建造枪
         /// </summary>
@@ -94,6 +68,11 @@ namespace enigma
             /// 有效出货总数
             /// </summary>
             public int valid_total { get; set; }
+
+            /// <summary>
+            /// 出货率
+            /// </summary>
+            public double valid_rate { get; set; }
 
             /// <summary>
             /// 开始时间
@@ -160,6 +139,11 @@ namespace enigma
             public int valid_total { get; set; }
 
             /// <summary>
+            /// 出货率
+            /// </summary>
+            public double valid_rate { get; set; }
+
+            /// <summary>
             /// 开始时间
             /// </summary>
             public int from_utc { get; set; }
@@ -203,6 +187,11 @@ namespace enigma
             /// 有效出货总数
             /// </summary>
             public int valid_total { get; set; }
+
+            /// <summary>
+            /// 出货率
+            /// </summary>
+            public double valid_rate { get; set; }
 
             /// <summary>
             /// 开始时间
@@ -263,6 +252,11 @@ namespace enigma
             /// 有效出货总数
             /// </summary>
             public int valid_total { get; set; }
+
+            /// <summary>
+            /// 出货率
+            /// </summary>
+            public double valid_rate { get; set; }
 
             /// <summary>
             /// 开始时间
@@ -342,6 +336,11 @@ namespace enigma
             /// 有效出货总数
             /// </summary>
             public int valid_total { get; set; }
+
+            /// <summary>
+            /// 出货率
+            /// </summary>
+            public double valid_rate { get; set; }
 
             /// <summary>
             /// 开始时间
@@ -458,9 +457,19 @@ namespace enigma
             public int gun_total { get; set; }
 
             /// <summary>
+            /// 出货率
+            /// </summary>
+            public double gun_rate { get; set; }
+
+            /// <summary>
             /// 有效出装备总数
             /// </summary>
             public int equip_total { get; set; }
+
+            /// <summary>
+            /// 出货率
+            /// </summary>
+            public double equip_rate { get; set; }
 
             /// <summary>
             /// 开始时间
@@ -553,9 +562,19 @@ namespace enigma
             public int gun_total { get; set; }
 
             /// <summary>
+            /// 出货率
+            /// </summary>
+            public double gun_rate { get; set; }
+
+            /// <summary>
             /// 有效出装备总数
             /// </summary>
             public int equip_total { get; set; }
+
+            /// <summary>
+            /// 出货率
+            /// </summary>
+            public double equip_rate { get; set; }
 
             /// <summary>
             /// 开始时间

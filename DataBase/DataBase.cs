@@ -32,6 +32,11 @@ namespace enigma
             /// </summary>
             public string DataBasePath = "data.db";
 
+            /// <summary>
+            /// 进入统计结果的数据的最低出现次数
+            /// </summary>
+            public int FilterCount = 100;
+
             private SQLiteConnection _db;
 
             /// <summary>
@@ -282,7 +287,7 @@ namespace enigma
             /// <param name="fromUTC">开始时间</param>
             /// <param name="toUTC">结束时间</param>
             /// <returns>结果</returns>
-            public List<T> Query<T>(int fromUTC, int toUTC) where T : RecordBase, new()
+            private List<T> Query<T>(int fromUTC, int toUTC) where T : RecordBase, new()
             {
                 Log?.Debug("Query {name} from {from} to {to}.", typeof(T).Name, fromUTC, toUTC);
                 return Query<T>(v => v.timestamp >= fromUTC && v.timestamp <= toUTC);
@@ -295,7 +300,7 @@ namespace enigma
             /// <param name="fromUTC">开始时间</param>
             /// <param name="toUTC">结束时间</param>
             /// <returns>结果</returns>
-            public Task<List<T>> QueryAsync<T>(int fromUTC, int toUTC) where T : RecordBase, new()
+            private Task<List<T>> QueryAsync<T>(int fromUTC, int toUTC) where T : RecordBase, new()
             {
                 return Task<List<T>>.Factory.StartNew(() => Query<T>(fromUTC, toUTC));
             }
@@ -306,7 +311,7 @@ namespace enigma
             /// <typeparam name="T">数据类型</typeparam>
             /// <param name="expression">规则表达式</param>
             /// <returns>数据结果</returns>
-            public List<T> Query<T>(Expression<Func<T,bool>> expression) where T : RecordBase, new()
+            private List<T> Query<T>(Expression<Func<T,bool>> expression) where T : RecordBase, new()
             {
                 return _db.Table<T>().Where(expression).ToList();
             }
@@ -317,7 +322,7 @@ namespace enigma
             /// <typeparam name="T">数据类型</typeparam>
             /// <param name="expression">规则表达式</param>
             /// <returns>数据结果</returns>
-            public Task<List<T>> QueryAsync<T>(Expression<Func<T, bool>> expression) where T : RecordBase, new()
+            private Task<List<T>> QueryAsync<T>(Expression<Func<T, bool>> expression) where T : RecordBase, new()
             {
                 return Task<List<T>>.Factory.StartNew(() => Query<T>(expression));
             }
@@ -340,6 +345,56 @@ namespace enigma
             public Task BackupAsync(string backDataBasePath)
             {
                 return Task.Factory.StartNew(() => { Backup(backDataBasePath); });
+            }
+
+            /// <summary>
+            /// 更新普通建造人型统计
+            /// </summary>
+            /// <param name="from">开始时间utc时间戳</param>
+            /// <param name="to">结束时间utc时间戳</param>
+            private void UpdateGunDevelopTotal(int from, int to)
+            {
+                var gunTable = _db.GetMapping<GunDevelop>();
+                var gunTotalTable = _db.GetMapping<GunDevelopTotal>();
+                // 获取不重复的公式
+                var formulaList =
+                    _db.Query<GunDevelop>(
+                        "SELECT DISTINCT mp, ammo, mre, part FROM ? WHERE timestamp >= ? AND timestamp < ?;",
+                        gunTable.TableName, from, to);
+                foreach (var it in formulaList)
+                {
+                    // 该公式的总数
+                    var count = _db.ExecuteScalar<int>(
+                        "SELECT count(*) FROM ? WHERE mp == ? AND ammo == ? AND mre == ? AND part == ? AND timestamp >= ? AND timestamp < ?;",
+                        gunTable.TableName, it.mp, it.ammo, it.mre, it.part, from, to);
+                    if(count < FilterCount) // 筛掉数量太少的
+                        continue;
+                    // 获取不重复的gun_id列表
+                    var gunList = _db.QueryScalars<int>(
+                        "SELECT DISTINCT gun_id FROM ? WHERE mp == ? AND ammo == ? AND mre == ? AND part == ? AND timestamp >= ? AND timestamp < ?;",
+                        gunTable.TableName, it.mp, it.ammo, it.mre, it.part, from, to);
+
+                    var total = new GunDevelopTotal
+                    {
+                        mp = it.mp,
+                        mre = it.mre,
+                        ammo = it.ammo,
+                        part = it.part,
+                        total = count
+                    };
+                    foreach (var gun_id in gunList)
+                    {
+                        total.valid_total = _db.ExecuteScalar<int>(
+                            "SELECT count(*) FROM ? WHERE mp == ? AND ammo == ? AND mre == ? AND part == ? AND timestamp >= ? AND timestamp < ? AND gun_id = ?;",
+                            gunTable.TableName, it.mp, it.ammo, it.mre, it.part, from, to, gun_id);
+                        total.valid_rate = (double)total.valid_total / total.total;
+                        var last = _db.Query<GunDevelopTotal>(
+                            "SELECT * FROM ? WHERE mp == ? AND ammo == ? AND mre == ? AND part == ? AND from_utc == ? AND to_utc == ? AND gun_id = ?;",
+                            gunTable.TableName, it.mp, it.ammo, it.mre, it.part, from, to, gun_id);
+                        total.id = last.Count > 0 ? last[0].id : 0;
+                        _db.InsertOrReplace(total);
+                    }
+                }
             }
         }
     }
