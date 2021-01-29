@@ -705,6 +705,12 @@ namespace enigma
                             dataJObject["battle_get_equip"] = equips;
                         }
 
+                        // 可能会在战斗中结束战役，调用战役结束处理。
+                        if (respObj?["mission_win_result"] != null)
+                        {
+                            ProcessData(request, response, _ruleJObject["Mission/endTurn"], "Mission/endTurn");
+                        }
+
                         break;
                     }
                     case "Mission/endTurn":
@@ -717,14 +723,33 @@ namespace enigma
                             return;
                         // 记录一个spot_id用于查询战役
                         dataJObject["spot_id"] = respObj["spot_act_info"][0]["spot_id"];
-                        // 仅保留gun_id
-                        var reward_gun = dataJObject.Value<JArray>("reward_gun");
-                        var guns = new JArray();
-                        foreach (var gun in reward_gun)
+                        
+                        if (dataJObject["reward_gun"] != null)
                         {
-                            guns.Add(gun["gun_id"]);
+                            // 仅保留equip_id
+                            var reward_gun = dataJObject.Value<JArray>("reward_gun");
+                            var guns = new JArray();
+                            foreach (var gun in reward_gun)
+                            {
+                                guns.Add(gun["gun_id"]);
+                            }
+
+                            dataJObject["reward_gun"] = guns;
                         }
-                        dataJObject["reward_gun"] = guns;
+
+                        if (dataJObject["reward_equip"] != null)
+                        {
+                            // 仅保留gun_id
+                            var reward_equip = dataJObject.Value<JArray>("reward_equip");
+                            var equips = new JArray();
+                            foreach (var equip in reward_equip)
+                            {
+                                equips.Add(equip["equip_id"]);
+                            }
+
+                            dataJObject["reward_equip"] = equips;
+                        }
+
                         break;
                     }
                 }

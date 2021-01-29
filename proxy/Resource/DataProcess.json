@@ -85,6 +85,10 @@
                 "mission_win_result",
                 "reward_gun"
             ],
+            "reward_equip":[
+                "mission_win_result",
+                "reward_equip"
+            ],
             "mission_rank": [
                 "mission_win_result",
                 "rank"
