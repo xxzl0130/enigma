@@ -30,10 +30,10 @@ namespace enigma_server
                 db.CreateTable<GunDevelop>();
                 var rd = new Random();
                 var gun = new GunDevelop();
-                for (var j = 0; j < 10; ++j)
+                for (var j = 0; j < 100; ++j)
                 {
                     db.BeginTransaction();
-                    for (var i = 0; i < 1000; ++i)
+                    for (var i = 0; i < 10000; ++i)
                     {
                         gun.part = 30 + rd.Next(0, 5);
                         gun.ammo = 30 + rd.Next(0, 5);
@@ -48,21 +48,29 @@ namespace enigma_server
                 stw.Stop();
                 Log.Information("生成数据完成，耗时{0}s", stw.Elapsed.TotalSeconds);
             }
-            Proxy.Instance.Port = 18888;
-            Proxy.Instance.DataEvent += DataEvent;
-            Proxy.Instance.EnableBlocking = false;
-            Proxy.Instance.Log = Log;
-            Proxy.Instance.Start();
-            DB.Instance.DataBasePath = "test.db";
-            DB.Instance.Log = Log;
-            DB.Instance.FilterCount = 10;
-            DB.Instance.Start();
 
-            var timer = new Stopwatch();
-            timer.Start();
-            DB.Instance.UpdateGunDevelopTotal(Utils.GetUTC() - 20,Utils.GetUTC() + 20);
-            timer.Stop();
-            Log.Information("更新数据完成，耗时{0}s", timer.Elapsed.TotalSeconds);
+            try
+            {
+                Proxy.Instance.Port = 18888;
+                Proxy.Instance.DataEvent += DataEvent;
+                Proxy.Instance.EnableBlocking = false;
+                Proxy.Instance.Log = Log;
+                Proxy.Instance.Start();
+                DB.Instance.DataBasePath = "test.db";
+                DB.Instance.Log = Log;
+                DB.Instance.FilterCount = 100;
+                DB.Instance.Start();
+
+                var timer = new Stopwatch();
+                timer.Start();
+                DB.Instance.UpdateGunDevelopTotal(Utils.GetUTC() - 50, Utils.GetUTC() + 50);
+                timer.Stop();
+                Log.Information("更新数据完成，耗时{0}s", timer.Elapsed.TotalSeconds);
+            }
+            catch (Exception e)
+            {
+                Log.Warning(e.ToString());
+            }
 
             Console.WriteLine(Proxy.Instance.LocalIPAddress + ":" + Proxy.Instance.Port);
 

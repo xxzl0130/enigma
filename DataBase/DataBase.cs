@@ -435,53 +435,63 @@ namespace enigma
             /// <param name="to">结束时间utc时间戳</param>
             public void UpdateGunDevelopTotal(int from, int to)
             {
+                Log?.Information("Start UpdateGunDevelopTotal from {0} to {1}.", from, to);
                 var gunTable = _db.GetMapping<GunDevelop>();
                 var gunTotalTable = _db.GetMapping<GunDevelopTotal>();
-                // 获取不重复的公式
-                var formulaList =
-                    _db.Query<GunDevelop>(
-                        $"SELECT DISTINCT mp, ammo, mre, part FROM {gunTable.TableName} WHERE timestamp >= {from} AND timestamp < {to};");
+                string cmd;
+                const string tmpTableName = "TempGunDevelop";
+                const string formulaTmpTable = "TempFormula";
+
+                cmd = $"DROP TABLE IF EXISTS {tmpTableName};";
+                _db.Execute(cmd);
+                cmd = $"CREATE TEMP TABLE {tmpTableName} " +
+                      $"AS SELECT * FROM {gunTable.TableName} " +
+                      $"WHERE timestamp >= {from} AND timestamp <= {to};";
+                _db.Execute(cmd); // 创建时间段临时表
+                // 获取不重复且数量大于过滤下限的公式
+                cmd = $"SELECT DISTINCT *,count(*) AS total FROM {tmpTableName} " + 
+                    $"GROUP BY mp,ammo,mre,part HAVING count(*) >= {FilterCount}";
+                var formulaList = _db.Query<GunDevelopTotal>(cmd);
+                
                 foreach (var it in formulaList)
                 {
-                    // 该公式的总数
-                    var count = _db.ExecuteScalar<int>(
-                        $"SELECT count(*) FROM {gunTable.TableName} WHERE timestamp >= {from} AND timestamp < {to} AND mp == {it.mp} AND ammo == {it.ammo} AND mre == {it.mre} AND part == {it.part};");
-                    if(count < FilterCount) // 筛掉数量太少的
-                        continue;
+                    cmd = $"DROP TABLE IF EXISTS {formulaTmpTable};";
+                    _db.Execute(cmd);
+                    cmd = $"CREATE TEMP TABLE {formulaTmpTable} " +
+                          $"AS SELECT * FROM {tmpTableName} " +
+                          $"WHERE mp == {it.mp} AND ammo == {it.ammo} AND mre == {it.mre} AND part == {it.part};";
+                    _db.Execute(cmd);//创建该公式的临时表
+                    
+                    cmd = $"SELECT DISTINCT gun_id FROM {formulaTmpTable}";
                     // 获取不重复的gun_id列表
-                    var gunList = _db.QueryScalars<int>(
-                        $"SELECT DISTINCT gun_id FROM {gunTable.TableName} WHERE timestamp >= {from} AND timestamp < {to} AND mp == {it.mp} AND ammo == {it.ammo} AND mre == {it.mre} AND part == {it.part};");
+                    var gunList = _db.QueryScalars<int>(cmd);
 
-                    var total = new GunDevelopTotal
-                    {
-                        mp = it.mp,
-                        mre = it.mre,
-                        ammo = it.ammo,
-                        part = it.part,
-                        total = count,
-                        from_utc = from,
-                        to_utc = to,
-                        timestamp = GetUTC()
-                    };
+                    it.from_utc = from;
+                    it.to_utc = to;
+                    it.timestamp = GetUTC();
                     foreach (var gun_id in gunList)
                     {
-                        total.valid_total = _db.ExecuteScalar<int>(
-                            $"SELECT count(*) FROM {gunTable.TableName} WHERE timestamp >= {from} AND timestamp < {to} AND mp == {it.mp} AND ammo == {it.ammo} AND mre == {it.mre} AND part == {it.part} AND gun_id = {gun_id};");
-                        total.valid_rate = (double)total.valid_total / total.total;
+                        cmd = $"SELECT count(*) FROM {formulaTmpTable} " +
+                              $"WHERE gun_id = {gun_id};";
+                        it.valid_total = _db.ExecuteScalar<int>(cmd);
+                        it.valid_rate = (double)it.valid_total / it.total;
                         var last = _db.Query<GunDevelopTotal>(
                             $"SELECT * FROM {gunTotalTable.TableName} WHERE mp == {it.mp} AND ammo == {it.ammo} AND mre == {it.mre} AND part == {it.part} AND from_utc == {from} AND to_utc == {to} AND gun_id = {gun_id};");
-                        total.gun_id = gun_id;
+                        it.gun_id = gun_id;
                         if (last.Count > 0)
                         {
-                            total.id = last[0].id;
-                            _db.InsertOrReplace(total);
+                            it.id = last[0].id;
+                            _db.InsertOrReplace(it);
                         }
                         else
                         {
-                            _db.Insert(total);
+                            _db.Insert(it);
                         }
                     }
+                    _db.Execute($"DROP table {formulaTmpTable};");
                 }
+
+                _db.Execute($"DROP TABLE {tmpTableName};");
             }
 
             /// <summary>
