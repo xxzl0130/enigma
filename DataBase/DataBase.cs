@@ -446,11 +446,14 @@ namespace enigma
                 _db.Execute(cmd);
                 cmd = $"CREATE TEMP TABLE {tmpTableName} " +
                       $"AS SELECT * FROM {gunTable.TableName} " +
-                      $"WHERE timestamp >= {from} AND timestamp <= {to};";
-                _db.Execute(cmd); // 创建时间段临时表
+                      $"WHERE timestamp >= {from} AND timestamp <= {to} " +
+                      $"AND (mp,ammo,mre,part) in (select mp,ammo,mre,part FROM " + 
+                      $"{gunTable.TableName} GROUP BY mp,ammo,mre,part " +
+                      $"HAVING count(*) >= {FilterCount});";
+                _db.Execute(cmd); // 创建时间段临时表，同时过滤数量
                 // 获取不重复且数量大于过滤下限的公式
-                cmd = $"SELECT DISTINCT *,count(*) AS total FROM {tmpTableName} " + 
-                    $"GROUP BY mp,ammo,mre,part HAVING count(*) >= {FilterCount}";
+                cmd = $"SELECT DISTINCT *,count(*) AS total FROM {tmpTableName} " +
+                      $"GROUP BY mp,ammo,mre,part HAVING count(*) >= {FilterCount}";
                 var formulaList = _db.Query<GunDevelopTotal>(cmd);
                 
                 foreach (var it in formulaList)
