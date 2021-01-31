@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Web;
+using enigma;
 using enigma.proxy;
 using enigma.DataBase;
 using GF_CipherSharp;
@@ -21,34 +23,34 @@ namespace enigma_server
                 .MinimumLevel.Debug()
                 .WriteTo.Console()
                 .CreateLogger();
-            using (var db = new SQLite.SQLiteConnection("test.db"))
-            {
-                var stw = new Stopwatch();
-                stw.Start();
-                db.DropTable<GunDevelop>();
-                db.DropTable<GunDevelopTotal>();
-                db.CreateTable<GunDevelop>();
-                var rd = new Random();
-                var gun = new GunDevelop();
-                for (var j = 0; j < 100; ++j)
-                {
-                    db.BeginTransaction();
-                    for (var i = 0; i < 10000; ++i)
-                    {
-                        gun.part = 30 + rd.Next(0, 5);
-                        gun.ammo = 30 + rd.Next(0, 5);
-                        gun.mp = 30 + rd.Next(0, 5);
-                        gun.mre = 30 + rd.Next(0, 5);
-                        gun.gun_id = rd.Next(1, 20);
-                        gun.timestamp = Utils.GetUTC() + rd.Next(-100, 100);
-                        db.Insert(gun);
-                    }
-                    db.Commit();
-                }
-                stw.Stop();
-                Log.Information("生成数据完成，耗时{0}s", stw.Elapsed.TotalSeconds);
-            }
-
+            //using (var db = new SQLite.SQLiteConnection("test.db"))
+            //{
+            //    var stw = new Stopwatch();
+            //    stw.Start();
+            //    db.DropTable<GunDevelop>();
+            //    db.DropTable<GunDevelopTotal>();
+            //    db.CreateTable<GunDevelop>();
+            //    var rd = new Random();
+            //    var gun = new GunDevelop();
+            //    for (var j = 0; j < 100; ++j)
+            //    {
+            //        db.BeginTransaction();
+            //        for (var i = 0; i < 10000; ++i)
+            //        {
+            //            gun.part = 30 + rd.Next(0, 5);
+            //            gun.ammo = 30 + rd.Next(0, 5);
+            //            gun.mp = 30 + rd.Next(0, 5);
+            //            gun.mre = 30 + rd.Next(0, 5);
+            //            gun.gun_id = rd.Next(1, 20);
+            //            gun.timestamp = Utils.GetUTC() + rd.Next(-100, 100);
+            //            db.Insert(gun);
+            //        }
+            //        db.Commit();
+            //    }
+            //    stw.Stop();
+            //    Log.Information("生成数据完成，耗时{0}s", stw.Elapsed.TotalSeconds);
+            //}
+            
             try
             {
                 Proxy.Instance.Port = 18888;
