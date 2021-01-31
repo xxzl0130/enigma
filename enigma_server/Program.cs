@@ -65,7 +65,8 @@ namespace enigma_server
 
                 var timer = new Stopwatch();
                 timer.Start();
-                DB.Instance.UpdateGunDevelopTotal(Utils.GetUTC() - 50, Utils.GetUTC() + 50);
+                DB.Instance.UpdateGunDevelopTotal(
+                    new TimeRange {Start = Utils.GetUTC() - 50, End = Utils.GetUTC() + 50, Type = RangeType.In}, 1);
                 timer.Stop();
                 Log.Information("更新数据完成，耗时{0}s", timer.Elapsed.TotalSeconds);
             }

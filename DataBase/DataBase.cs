@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -431,11 +432,11 @@ namespace enigma
             /// <summary>
             /// 更新普通建造人型统计
             /// </summary>
-            /// <param name="from">开始时间utc时间戳</param>
-            /// <param name="to">结束时间utc时间戳</param>
-            public void UpdateGunDevelopTotal(int from, int to)
+            /// <param name="timeRanges">时间范围列表</param>
+            /// <param name="timeID">时间范围id</param>
+            public void UpdateGunDevelopTotal(IEnumerable<TimeRange> timeRanges, int timeID)
             {
-                Log?.Information("Start UpdateGunDevelopTotal from {0} to {1}.", from, to);
+                Log?.Information("Start UpdateGunDevelopTotal with time ID = {0}.", timeID);
                 var gunTable = _db.GetMapping<GunDevelop>();
                 var gunTotalTable = _db.GetMapping<GunDevelopTotal>();
                 string cmd;
@@ -446,14 +447,14 @@ namespace enigma
                 _db.Execute(cmd);
                 cmd = $"CREATE TEMP TABLE {tmpTableName} " +
                       $"AS SELECT * FROM {gunTable.TableName} " +
-                      $"WHERE timestamp >= {from} AND timestamp <= {to} " +
-                      $"AND (mp,ammo,mre,part) in (select mp,ammo,mre,part FROM " + 
-                      $"{gunTable.TableName} GROUP BY mp,ammo,mre,part " +
+                      $"WHERE {TimeRange.TimeRangeList2SQL(timeRanges,TimeStr)} " +
+                      $"AND ({FormulaStr}) in (select {FormulaStr} FROM " + 
+                      $"{gunTable.TableName} GROUP BY {FormulaStr} " +
                       $"HAVING count(*) >= {FilterCount});";
                 _db.Execute(cmd); // 创建时间段临时表，同时过滤数量
                 // 获取不重复且数量大于过滤下限的公式
                 cmd = $"SELECT DISTINCT *,count(*) AS total FROM {tmpTableName} " +
-                      $"GROUP BY mp,ammo,mre,part HAVING count(*) >= {FilterCount}";
+                      $"GROUP BY {FormulaStr} HAVING count(*) >= {FilterCount}";
                 var formulaList = _db.Query<GunDevelopTotal>(cmd);
                 
                 foreach (var it in formulaList)
@@ -469,8 +470,7 @@ namespace enigma
                     // 获取不重复的gun_id列表
                     var gunList = _db.QueryScalars<int>(cmd);
 
-                    it.from_utc = from;
-                    it.to_utc = to;
+                    it.time_id = timeID;
                     it.timestamp = GetUTC();
                     foreach (var gun_id in gunList)
                     {
@@ -479,7 +479,7 @@ namespace enigma
                         it.valid_total = _db.ExecuteScalar<int>(cmd);
                         it.valid_rate = (double)it.valid_total / it.total;
                         var last = _db.Query<GunDevelopTotal>(
-                            $"SELECT * FROM {gunTotalTable.TableName} WHERE mp == {it.mp} AND ammo == {it.ammo} AND mre == {it.mre} AND part == {it.part} AND from_utc == {from} AND to_utc == {to} AND gun_id = {gun_id};");
+                            $"SELECT * FROM {gunTotalTable.TableName} WHERE mp == {it.mp} AND ammo == {it.ammo} AND mre == {it.mre} AND part == {it.part} AND gun_id = {gun_id};");
                         it.gun_id = gun_id;
                         if (last.Count > 0)
                         {
@@ -498,6 +498,16 @@ namespace enigma
             }
 
             /// <summary>
+            /// 更新普通建造人型统计
+            /// </summary>
+            /// <param name="timeRange">时间范围</param>
+            /// <param name="timeID">时间范围id</param>
+            public void UpdateGunDevelopTotal(TimeRange timeRange, int timeID)
+            {
+                UpdateGunDevelopTotal(new List<TimeRange> {timeRange}, timeID);
+            }
+
+            /// <summary>
             /// 获取UTC时间戳
             /// </summary>
             /// <returns>UTC时间戳</returns>
@@ -505,6 +515,15 @@ namespace enigma
             {
                 return (int)(DateTime.Now - new DateTime(1970, 1, 1)).TotalSeconds;
             }
+
+            /// <summary>
+            /// 4项资源公式字符串
+            /// </summary>
+            private const string FormulaStr = "mp,ammo,mre,part";
+            /// <summary>
+            /// 时间戳列字符串
+            /// </summary>
+            private const string TimeStr = "timestamp";
         }
     }
 }

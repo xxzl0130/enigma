@@ -75,14 +75,9 @@ namespace enigma
             public double valid_rate { get; set; }
 
             /// <summary>
-            /// 开始时间
+            /// 时间范围id
             /// </summary>
-            public int from_utc { get; set; }
-
-            /// <summary>
-            /// 结束时间
-            /// </summary>
-            public int to_utc { get; set; }
+            public int time_id { get; set; }
         }
 
         /// <summary>
@@ -144,14 +139,9 @@ namespace enigma
             public double valid_rate { get; set; }
 
             /// <summary>
-            /// 开始时间
+            /// 时间范围id
             /// </summary>
-            public int from_utc { get; set; }
-
-            /// <summary>
-            /// 结束时间
-            /// </summary>
-            public int to_utc { get; set; }
+            public int time_id { get; set; }
         }
 
         /// <summary>
@@ -194,14 +184,9 @@ namespace enigma
             public double valid_rate { get; set; }
 
             /// <summary>
-            /// 开始时间
+            /// 时间范围id
             /// </summary>
-            public int from_utc { get; set; }
-
-            /// <summary>
-            /// 结束时间
-            /// </summary>
-            public int to_utc { get; set; }
+            public int time_id { get; set; }
         }
 
         /// <summary>
@@ -259,14 +244,9 @@ namespace enigma
             public double valid_rate { get; set; }
 
             /// <summary>
-            /// 开始时间
+            /// 时间范围id
             /// </summary>
-            public int from_utc { get; set; }
-
-            /// <summary>
-            /// 结束时间
-            /// </summary>
-            public int to_utc { get; set; }
+            public int time_id { get; set; }
         }
 
         /// <summary>
@@ -343,14 +323,9 @@ namespace enigma
             public double valid_rate { get; set; }
 
             /// <summary>
-            /// 开始时间
+            /// 时间范围id
             /// </summary>
-            public int from_utc { get; set; }
-
-            /// <summary>
-            /// 结束时间
-            /// </summary>
-            public int to_utc { get; set; }
+            public int time_id { get; set; }
         }
 
         /// <summary>
@@ -472,14 +447,9 @@ namespace enigma
             public double equip_rate { get; set; }
 
             /// <summary>
-            /// 开始时间
+            /// 时间范围id
             /// </summary>
-            public int from_utc { get; set; }
-
-            /// <summary>
-            /// 结束时间
-            /// </summary>
-            public int to_utc { get; set; }
+            public int time_id { get; set; }
         }
 
         /// <summary>
@@ -577,14 +547,9 @@ namespace enigma
             public double equip_rate { get; set; }
 
             /// <summary>
-            /// 开始时间
+            /// 时间范围id
             /// </summary>
-            public int from_utc { get; set; }
-
-            /// <summary>
-            /// 结束时间
-            /// </summary>
-            public int to_utc { get; set; }
+            public int time_id { get; set; }
         }
     }
 }
