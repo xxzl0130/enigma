@@ -57,18 +57,20 @@ namespace enigma_server
                 Proxy.Instance.DataEvent += DataEvent;
                 Proxy.Instance.EnableBlocking = false;
                 Proxy.Instance.Log = Log;
+                Proxy.Instance.EnableBlocking = true;
                 Proxy.Instance.Start();
                 DB.Instance.DataBasePath = "test.db";
                 DB.Instance.Log = Log;
                 DB.Instance.FilterCount = 100;
                 DB.Instance.Start();
-
+                /*
                 var timer = new Stopwatch();
                 timer.Start();
                 DB.Instance.UpdateGunDevelopTotal(
                     new TimeRange {Start = Utils.GetUTC() - 50, End = Utils.GetUTC() + 50, Type = RangeType.In}, 1);
                 timer.Stop();
                 Log.Information("更新数据完成，耗时{0}s", timer.Elapsed.TotalSeconds);
+                */
             }
             catch (Exception e)
             {

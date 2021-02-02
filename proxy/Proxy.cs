@@ -9,6 +9,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Web;
+using System.Text.RegularExpressions;
 using Titanium.Web.Proxy;
 using Titanium.Web.Proxy.EventArguments;
 using Titanium.Web.Proxy.Models;
@@ -265,6 +266,12 @@ namespace enigma
             public bool EnableBlocking = false;
 
             /// <summary>
+            /// 不屏蔽的链接，会和url匹配，正则表达式
+            /// </summary>
+            public string NonBlockingPattern =
+                @"(gfcn-(game|passport|transit)\.[\w\.]+\.sunborngame\.com)|(sn-game\.txwy\.tw)|(girlfrontline\.co\.kr)";
+
+            /// <summary>
             /// 启动代理
             /// </summary>
             public void Start()
@@ -325,7 +332,7 @@ namespace enigma
                 }
 
                 // 此时是没有匹配
-                if (EnableBlocking)
+                if (EnableBlocking && !Regex.IsMatch(url, NonBlockingPattern))
                 {
                     e.Ok("Blocked!");
                     Log?.Debug("Blocked {url}", url);
