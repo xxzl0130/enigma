@@ -7,17 +7,13 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SQLite;
 
+// 这个文件里放DataBase的基础信息和接口
 namespace enigma
 {
     namespace DataBase
     {
-        public class DB
+        public partial class DB
         {
-            /// <summary>
-            /// 单例对象
-            /// </summary>
-            private static readonly DB _instance = new DB();
-
             /// <summary>
             /// 获取单例对象
             /// </summary>
@@ -55,6 +51,27 @@ namespace enigma
                 System.Text.Encoding.UTF8.GetString(Resource.enemy2mission));
 
             /// <summary>
+            /// 需要创建Table的类型列表
+            /// </summary>
+            private static List<Type> _createTableList = new List<Type>()
+            {
+                typeof(GunDevelop),
+                typeof(GunDevelopTotal),
+                typeof(GunDevelopHeavy),
+                typeof(GunDevelopHeavyTotal),
+                typeof(EquipProduce),
+                typeof(EquipProduceTotal),
+                typeof(EquipDevelop),
+                typeof(EquipDevelopTotal),
+                typeof(EquipDevelopHeavy),
+                typeof(EquipDevelopHeavyTotal),
+                typeof(MissionBattle),
+                typeof(MissionBattleTotal),
+                typeof(MissionFinish),
+                typeof(MissionFinishTotal)
+            };
+
+            /// <summary>
             /// 启动数据库运行
             /// </summary>
             /// <param name="dataBasePath">数据库路径</param>
@@ -65,20 +82,10 @@ namespace enigma
                 _db = new SQLiteConnection(DataBasePath);
 
                 // 创建表，这个库会自动处理数据结构变更和重复创建
-                _db.CreateTable<GunDevelop>();
-                _db.CreateTable<GunDevelopTotal>();
-                _db.CreateTable<GunDevelopHeavy>();
-                _db.CreateTable<GunDevelopHeavyTotal>();
-                _db.CreateTable<EquipProduce>();
-                _db.CreateTable<EquipProduceTotal>();
-                _db.CreateTable<EquipDevelop>();
-                _db.CreateTable<EquipDevelopTotal>();
-                _db.CreateTable<EquipDevelopHeavy>();
-                _db.CreateTable<EquipDevelopHeavyTotal>();
-                _db.CreateTable<MissionBattle>();
-                _db.CreateTable<MissionBattleTotal>();
-                _db.CreateTable<MissionFinish>();
-                _db.CreateTable<MissionFinishTotal>();
+                foreach (var type in _createTableList)
+                {
+                    _db.CreateTable(type);
+                }
 
                 // debug log
                 _db.Trace = true;
@@ -288,17 +295,7 @@ namespace enigma
                     _db.InsertAll(objList);
                 }
             }
-
-            /// <summary>
-            /// 跟proxy对接的接口的异步版，接收json object，解析数据并插入数据库
-            /// </summary>
-            /// <param name="data">数据</param>
-            /// <returns>task</returns>
-            public Task ReceiveDataObjectAsync(JObject data)
-            {
-                return Task.Factory.StartNew(() => { ReceiveDataObject(data); });
-            }
-
+            
             /// <summary>
             /// 批量导入数据
             /// </summary>
@@ -315,16 +312,7 @@ namespace enigma
                     _db.Commit();
                 }
             }
-
-            /// <summary>
-            /// 批量导入数据
-            /// </summary>
-            /// <param name="data">JSON格式数据，每个key对应一个type，包含一个array</param>
-            public Task ImportDataAsync(JObject data)
-            {
-                return Task.Factory.StartNew(() => ImportData(data));
-            }
-
+            
             /// <summary>
             /// 导出一段时间的数据
             /// </summary>
@@ -352,17 +340,6 @@ namespace enigma
             }
 
             /// <summary>
-            /// 导出一段时间的数据
-            /// </summary>
-            /// <param name="from">开始时间戳</param>
-            /// <param name="to">结束时间戳</param>
-            /// <returns>数据</returns>
-            public Task<JObject> ExportDataAsync(int from, int to)
-            {
-                return Task<JObject>.Factory.StartNew(() => ExportData(from, to));
-            }
-
-            /// <summary>
             /// 查询一段时间内的数据
             /// </summary>
             /// <typeparam name="T">类型</typeparam>
@@ -373,18 +350,6 @@ namespace enigma
             {
                 Log?.Debug("Query {name} from {from} to {to}.", typeof(T).Name, fromUTC, toUTC);
                 return Query<T>(v => v.timestamp >= fromUTC && v.timestamp <= toUTC);
-            }
-
-            /// <summary>
-            /// 查询一段时间内的数据，异步
-            /// </summary>
-            /// <typeparam name="T">类型</typeparam>
-            /// <param name="fromUTC">开始时间</param>
-            /// <param name="toUTC">结束时间</param>
-            /// <returns>结果</returns>
-            private Task<List<T>> QueryAsync<T>(int fromUTC, int toUTC) where T : RecordBase, new()
-            {
-                return Task<List<T>>.Factory.StartNew(() => Query<T>(fromUTC, toUTC));
             }
 
             /// <summary>
@@ -399,17 +364,6 @@ namespace enigma
             }
 
             /// <summary>
-            /// 根据自定义规则查询数据，异步
-            /// </summary>
-            /// <typeparam name="T">数据类型</typeparam>
-            /// <param name="expression">规则表达式</param>
-            /// <returns>数据结果</returns>
-            private Task<List<T>> QueryAsync<T>(Expression<Func<T, bool>> expression) where T : RecordBase, new()
-            {
-                return Task<List<T>>.Factory.StartNew(() => Query<T>(expression));
-            }
-
-            /// <summary>
             /// 备份数据库
             /// </summary>
             /// <param name="backDataBasePath">备份路径</param>
@@ -418,178 +372,6 @@ namespace enigma
                 Log?.Information("Backup database to {path}.", backDataBasePath);
                 _db.Backup(backDataBasePath);
                 Log?.Information("Database backup complete.");
-            }
-
-            /// <summary>
-            /// 备份数据库异步
-            /// </summary>
-            /// <param name="backDataBasePath">备份路径</param>
-            public Task BackupAsync(string backDataBasePath)
-            {
-                return Task.Factory.StartNew(() => { Backup(backDataBasePath); });
-            }
-
-            /// <summary>
-            /// 更新普通建造人型统计
-            /// </summary>
-            /// <param name="timeRanges">时间范围列表</param>
-            /// <param name="timeID">时间范围id</param>
-            public void UpdateGunDevelopTotal(IEnumerable<TimeRange> timeRanges, int timeID)
-            {
-                Log?.Information("Start UpdateGunDevelopTotal with time ID = {0}.", timeID);
-                var gunTable = _db.GetMapping<GunDevelop>();
-                var gunTotalTable = _db.GetMapping<GunDevelopTotal>();
-                string cmd;
-                const string tmpTableName = "TempGunDevelop";
-                const string formulaTmpTable = "TempGunDevelopFormula";
-
-                cmd = $"DROP TABLE IF EXISTS {tmpTableName};";
-                _db.Execute(cmd);
-                cmd = $"CREATE TEMP TABLE {tmpTableName} " +
-                      $"AS SELECT * FROM {gunTable.TableName} " +
-                      $"WHERE {TimeRange.TimeRangeList2SQL(timeRanges,TimeStr)} " +
-                      $"AND ({FormulaStr}) in (select {FormulaStr} FROM " + 
-                      $"{gunTable.TableName} GROUP BY {FormulaStr} " +
-                      $"HAVING count(*) >= {FilterCount});";
-                _db.Execute(cmd); // 创建时间段临时表，同时过滤数量
-                // 获取不重复的公式
-                cmd = $"SELECT DISTINCT *,count(*) AS total FROM {tmpTableName};";
-                var formulaList = _db.Query<GunDevelopTotal>(cmd);
-                
-                foreach (var it in formulaList)
-                {
-                    cmd = $"DROP TABLE IF EXISTS {formulaTmpTable};";
-                    _db.Execute(cmd);
-                    cmd = $"CREATE TEMP TABLE {formulaTmpTable} " +
-                          $"AS SELECT * FROM {tmpTableName} " +
-                          $"WHERE mp == {it.mp} AND ammo == {it.ammo} AND mre == {it.mre} AND part == {it.part};";
-                    _db.Execute(cmd);//创建该公式的临时表
-                    
-                    cmd = $"SELECT DISTINCT gun_id FROM {formulaTmpTable}";
-                    // 获取不重复的gun_id列表
-                    var gunList = _db.QueryScalars<int>(cmd);
-
-                    it.time_id = timeID;
-                    it.timestamp = GetUTC();
-                    foreach (var gun_id in gunList)
-                    {
-                        cmd = $"SELECT count(*) FROM {formulaTmpTable} " +
-                              $"WHERE gun_id = {gun_id};";
-                        it.valid_total = _db.ExecuteScalar<int>(cmd);
-                        it.valid_rate = (double)it.valid_total / it.total;
-                        // 查询之前是否已经有相同公式的记录
-                        var list = _db.Table<GunDevelopTotal>().Where(v =>
-                                v.time_id == it.time_id && v.mp == it.mp && v.ammo == it.ammo && v.mre == it.mre && v.part == it.part)
-                                .ToList();
-                        it.gun_id = gun_id;
-                        if (list.Count > 0)
-                        {
-                            it.id = list[0].id;
-                            _db.InsertOrReplace(it);
-                        }
-                        else
-                        {
-                            it.id = 0;
-                            _db.Insert(it);
-                        }
-                    }
-                    _db.Execute($"DROP table {formulaTmpTable};");
-                }
-
-                _db.Execute($"DROP TABLE {tmpTableName};");
-            }
-
-            /// <summary>
-            /// 更新普通建造人型统计
-            /// </summary>
-            /// <param name="timeRange">时间范围</param>
-            /// <param name="timeID">时间范围id</param>
-            public void UpdateGunDevelopTotal(TimeRange timeRange, int timeID)
-            {
-                UpdateGunDevelopTotal(new List<TimeRange> {timeRange}, timeID);
-            }
-
-            /// <summary>
-            /// 更新重型建造人型统计
-            /// </summary>
-            /// <param name="timeRanges">时间范围列表</param>
-            /// <param name="timeID">时间范围id</param>
-            public void UpdateGunDevelopHeavyTotal(IEnumerable<TimeRange> timeRanges, int timeID)
-            {
-                Log?.Information("Start UpdateGunDevelopHeavyTotal with time ID = {0}.", timeID);
-                var gunTable = _db.GetMapping<GunDevelopHeavy>();
-                var gunTotalTable = _db.GetMapping<GunDevelopHeavyTotal>();
-                string cmd;
-                const string tmpTableName = "TempGunDevelopHeavy";
-                const string formulaTmpTable = "TempGunDevelopHeavyFormula";
-
-                cmd = $"DROP TABLE IF EXISTS {tmpTableName};";
-                _db.Execute(cmd);
-                cmd = $"CREATE TEMP TABLE {tmpTableName} " +
-                      $"AS SELECT * FROM {gunTable.TableName} " +
-                      $"WHERE {TimeRange.TimeRangeList2SQL(timeRanges, TimeStr)} " +
-                      $"AND ({FormulaLevelStr}) in (select {FormulaLevelStr} FROM " +
-                      $"{gunTable.TableName} GROUP BY {FormulaLevelStr} " +
-                      $"HAVING count(*) >= {FilterCount});";
-                _db.Execute(cmd); // 创建时间段临时表，同时过滤数量
-                // 获取不重复的公式
-                cmd = $"SELECT DISTINCT *,count(*) AS total FROM {tmpTableName};";
-                var formulaList = _db.Query<GunDevelopHeavyTotal>(cmd);
-
-                foreach (var it in formulaList)
-                {
-                    cmd = $"DROP TABLE IF EXISTS {formulaTmpTable};";
-                    _db.Execute(cmd);
-                    cmd = $"CREATE TEMP TABLE {formulaTmpTable} " +
-                          $"AS SELECT * FROM {tmpTableName} " +
-                          $"WHERE mp == {it.mp} AND ammo == {it.ammo} " + 
-                          $"AND mre == {it.mre} AND part == {it.part} " + 
-                          $"AND input_level == {it.input_level}";
-                    _db.Execute(cmd);//创建该公式的临时表
-
-                    cmd = $"SELECT DISTINCT gun_id FROM {formulaTmpTable}";
-                    // 获取不重复的gun_id列表
-                    var gunList = _db.QueryScalars<int>(cmd);
-
-                    it.time_id = timeID;
-                    it.timestamp = GetUTC();
-                    foreach (var gun_id in gunList)
-                    {
-                        cmd = $"SELECT count(*) FROM {formulaTmpTable} " +
-                              $"WHERE gun_id = {gun_id};";
-                        it.valid_total = _db.ExecuteScalar<int>(cmd);
-                        it.valid_rate = (double)it.valid_total / it.total;
-                        it.gun_id = gun_id;
-                        // 查询之前是否已经有相同公式的记录
-                        var list = _db.Table<GunDevelopHeavyTotal>().Where(v =>
-                                v.time_id == it.time_id && v.mp == it.mp && v.ammo == it.ammo && v.mre == it.mre
-                                && v.part == it.part && v.input_level == it.input_level)
-                                .ToList();
-                        if (list.Count > 0)
-                        {
-                            it.id = list[0].id;
-                            _db.InsertOrReplace(it);
-                        }
-                        else
-                        {
-                            it.id = 0;
-                            _db.Insert(it);
-                        }
-                    }
-                    _db.Execute($"DROP table {formulaTmpTable};");
-                }
-
-                _db.Execute($"DROP TABLE {tmpTableName};");
-            }
-
-            /// <summary>
-            /// 更新重型建造人型统计
-            /// </summary>
-            /// <param name="timeRange">时间范围</param>
-            /// <param name="timeID">时间范围id</param>
-            public void UpdateGunDevelopHeavyTotal(TimeRange timeRange, int timeID)
-            {
-                UpdateGunDevelopHeavyTotal(new List<TimeRange> { timeRange }, timeID);
             }
 
             /// <summary>
@@ -613,6 +395,11 @@ namespace enigma
             /// 时间戳列字符串
             /// </summary>
             private const string TimeStr = "timestamp";
+
+            /// <summary>
+            /// 单例对象
+            /// </summary>
+            private static readonly DB _instance = new DB();
         }
     }
 }
