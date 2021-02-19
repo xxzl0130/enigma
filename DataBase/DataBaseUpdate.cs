@@ -178,6 +178,130 @@ namespace enigma
             }
 
             /// <summary>
+            /// 更新战斗统计
+            /// </summary>
+            /// <param name="timeRanges">时间范围</param>
+            /// <param name="timeID">时间范围id</param>
+            public void UpdateMissionBattleTotal(IEnumerable<TimeRange> timeRanges, int timeID)
+            {
+                // 不用搜救的枪记录
+                UpdateTable<MissionBattle, MissionBattleTotal>(timeRanges, timeID,
+                    "enemy,battle_rank", "gun_id",
+                    total => $"enemy == {total.enemy} AND battle_rank == {total.battle_rank} AND " +
+                             $"(use_fairy_skill == 0 OR use_fairy_id != {SearchFairyID} OR fairy_skill_lv != 10) ",
+                    (obj, total, id, timeId) =>
+                    {
+                        obj.time_id = timeId;
+                        obj.gun_total = total;
+                        obj.gun_id = id;
+                        obj.gun_rate = (double)obj.gun_total / obj.total;
+                        obj.use_search_fairy = false;
+                        return obj;
+                    },
+                    total => $"enemy == {total.enemy} AND battle_rank == {total.battle_rank} AND " +
+                             $"gun_id == {total.gun_id} AND time_id == {total.time_id} AND use_search_fairy == 0",
+                    "gun_id_extra"
+                );
+                // 用搜救的枪记录
+                UpdateTable<MissionBattle, MissionBattleTotal>(timeRanges, timeID,
+                    "enemy,battle_rank", "gun_id",
+                    total => $"enemy == {total.enemy} AND battle_rank == {total.battle_rank} AND " +
+                             $"use_fairy_skill == 1 AND use_fairy_id == {SearchFairyID} AND fairy_skill_lv == 10 ",
+                    (obj, total, id, timeId) =>
+                    {
+                        obj.time_id = timeId;
+                        obj.gun_total = total;
+                        obj.gun_id = id;
+                        obj.gun_rate = (double)obj.gun_total / obj.total;
+                        obj.use_search_fairy = true;
+                        return obj;
+                    },
+                    total => $"enemy == {total.enemy} AND battle_rank == {total.battle_rank} AND " +
+                             $"gun_id == {total.gun_id} AND time_id == {total.time_id} AND use_search_fairy == 1",
+                    "gun_id_extra"
+                );
+                // 装备记录，搜救无所谓
+                UpdateTable<MissionBattle, MissionBattleTotal>(timeRanges, timeID,
+                    "enemy,battle_rank", "equip_id",
+                    total => $"enemy == {total.enemy} AND battle_rank == {total.battle_rank} AND " +
+                             $"use_fairy_skill == 1 AND use_fairy_id == {SearchFairyID} AND fairy_skill_lv == 10 ",
+                    (obj, total, id, timeId) =>
+                    {
+                        obj.time_id = timeId;
+                        obj.equip_total = total;
+                        obj.equip_id = id;
+                        obj.equip_rate = (double)obj.equip_total / obj.total;
+                        obj.use_search_fairy = false;
+                        return obj;
+                    },
+                    total => $"enemy == {total.enemy} AND battle_rank == {total.battle_rank} AND " +
+                             $"equip_id == {total.equip_id} AND time_id == {total.time_id}",
+                    "equip_id_extra"
+                );
+            }
+
+            /// <summary>
+            /// 更新战斗统计
+            /// </summary>
+            /// <param name="timeRange">时间范围</param>
+            /// <param name="timeID">时间范围id</param>
+            public void UpdateMissionBattleTotal(TimeRange timeRange, int timeID)
+            {
+                UpdateMissionBattleTotal(new List<TimeRange> { timeRange }, timeID);
+            }
+
+            /// <summary>
+            /// 更新战役统计
+            /// </summary>
+            /// <param name="timeRanges">时间范围</param>
+            /// <param name="timeID">时间范围id</param>
+            public void UpdateMissionFinishTotal(IEnumerable<TimeRange> timeRanges, int timeID)
+            {
+                // 枪记录
+                UpdateTable<MissionFinish, MissionFinishTotal>(timeRanges, timeID,
+                    "mission_id,mission_rank", "gun_id",
+                    total => $"mission_id == {total.mission_id} AND mission_rank == {total.mission_rank} ",
+                    (obj, total, id, timeId) =>
+                    {
+                        obj.time_id = timeId;
+                        obj.gun_total = total;
+                        obj.gun_id = id;
+                        obj.gun_rate = (double)obj.gun_total / obj.total;
+                        return obj;
+                    },
+                    total => $"mission_id == {total.mission_id} AND mission_rank == {total.mission_rank} AND " +
+                             $"gun_id == {total.gun_id} AND time_id == {total.time_id}",
+                    "gun_id_extra"
+                );
+                // 装备记录
+                UpdateTable<MissionFinish, MissionFinishTotal>(timeRanges, timeID,
+                    "mission_id,mission_rank", "equip_id",
+                    total => $"mission_id == {total.mission_id} AND mission_rank == {total.mission_rank} ",
+                    (obj, total, id, timeId) =>
+                    {
+                        obj.time_id = timeId;
+                        obj.equip_total = total;
+                        obj.equip_id = id;
+                        obj.equip_rate = (double)obj.equip_total / obj.total;
+                        return obj;
+                    },
+                    total => $"mission_id == {total.mission_id} AND mission_rank == {total.mission_rank} AND " +
+                             $"equip_id == {total.equip_id} AND time_id == {total.time_id}",
+                    "equip_id_extra"
+                );
+            }
+
+            /// <summary>
+            /// 更新战役统计
+            /// </summary>
+            /// <param name="timeRange">时间范围</param>
+            /// <param name="timeID">时间范围id</param>
+            public void UpdateMissionFinishTotal(TimeRange timeRange, int timeID)
+            {
+                UpdateMissionFinishTotal(new List<TimeRange> { timeRange }, timeID);
+            }
+
+            /// <summary>
             /// 根据输入创建公式语句的函数
             /// </summary>
             /// <typeparam name="T">记录/统计信息类型</typeparam>
@@ -204,13 +328,14 @@ namespace enigma
             /// <param name="timeID">时间id</param>
             /// <param name="groupBy">统计的公式的group by参数</param>
             /// <param name="idName">要统计的id的名称</param>
+            /// <param name="idName2">要统计的id的别名</param>
             /// <param name="makeFormulaCmd">创建该公式的临时表的where语句参数</param>
             /// <param name="updateCount">更新统计信息</param>
             /// <param name="makeFindSameCmd">查找是否已有相同条件的统计信息的where语句参数</param>
             private void UpdateTable<TRecordType,TCountType>
                 (IEnumerable<TimeRange> timeRanges, int timeID, string groupBy, string idName,
                 MakeFormulaCmd<TCountType> makeFormulaCmd, UpdateCount<TCountType> updateCount,
-                MakeFormulaCmd<TCountType> makeFindSameCmd)
+                MakeFormulaCmd<TCountType> makeFindSameCmd, string idName2 = null)
                 where TRecordType : RecordBase, new()
                 where TCountType : RecordBase, new()
             {
@@ -251,7 +376,11 @@ namespace enigma
                     foreach (var id in idList)
                     {
                         cmd = $"SELECT count(*) FROM {formulaTmpTable} " +
-                              $"WHERE {idName} == {id};";
+                              $"WHERE {idName} == {id}";
+                        if (idName2 != null)
+                            cmd += $" AND {idName2} == {id};";
+                        else
+                            cmd += ";";
                         var total = _db.QueryScalars<int>(cmd);
                         updateCount(it, total[0], id, timeID);
                         it.timestamp = GetUTC();
@@ -277,6 +406,11 @@ namespace enigma
 
                 _db.Execute($"DROP TABLE {tmpTableName};");
             }
+
+            /// <summary>
+            /// 搜救妖精id
+            /// </summary>
+            private const int SearchFairyID = 16;
         }
     }
 }
