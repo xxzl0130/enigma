@@ -115,6 +115,46 @@ namespace enigma
             {
                 return Task.Factory.StartNew(() => { UpdateGunDevelopHeavyTotal(timeRange, timeID); });
             }
+
+            /// <summary>
+            /// 更新普通建造装备统计
+            /// </summary>
+            /// <param name="timeRanges">时间范围列表</param>
+            /// <param name="timeID">时间范围id</param>
+            public Task UpdateEquipDevelopTotalAsync(IEnumerable<TimeRange> timeRanges, int timeID)
+            {
+                return Task.Factory.StartNew(() => { UpdateEquipDevelopTotal(timeRanges, timeID); });
+            }
+
+            /// <summary>
+            /// 更新普通建造装备统计
+            /// </summary>
+            /// <param name="timeRange">时间范围</param>
+            /// <param name="timeID">时间范围id</param>
+            public Task UpdateEquipDevelopTotalAsync(TimeRange timeRange, int timeID)
+            {
+                return Task.Factory.StartNew(() => { UpdateEquipDevelopTotal(timeRange, timeID); });
+            }
+
+            /// <summary>
+            /// 更新重型建造装备统计
+            /// </summary>
+            /// <param name="timeRanges">时间范围列表</param>
+            /// <param name="timeID">时间范围id</param>
+            public Task UpdateEquipDevelopHeavyTotalAsync(IEnumerable<TimeRange> timeRanges, int timeID)
+            {
+                return Task.Factory.StartNew(() => { UpdateEquipDevelopHeavyTotal(timeRanges, timeID); });
+            }
+
+            /// <summary>
+            /// 更新重型建造装备统计
+            /// </summary>
+            /// <param name="timeRange">时间范围</param>
+            /// <param name="timeID">时间范围id</param>
+            public Task UpdateEquipDevelopHeavyTotalAsync(TimeRange timeRange, int timeID)
+            {
+                return Task.Factory.StartNew(() => { UpdateEquipDevelopHeavyTotal(timeRange, timeID); });
+            }
         }
     }
 }

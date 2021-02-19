@@ -21,69 +21,22 @@ namespace enigma
             /// <param name="timeID">时间范围id</param>
             public void UpdateGunDevelopTotal(IEnumerable<TimeRange> timeRanges, int timeID)
             {
-                Log?.Information("Start UpdateGunDevelopTotal with time ID = {0}.", timeID);
-                var gunTable = _db.GetMapping<GunDevelop>();
-                var gunTotalTable = _db.GetMapping<GunDevelopTotal>();
-                string cmd;
-                const string tmpTableName = "TempGunDevelop";
-                const string formulaTmpTable = "TempGunDevelopFormula";
-
-                cmd = $"DROP TABLE IF EXISTS {tmpTableName};";
-                _db.Execute(cmd);
-                cmd = $"CREATE TEMP TABLE {tmpTableName} " +
-                      $"AS SELECT * FROM {gunTable.TableName} " +
-                      $"WHERE {TimeRange.TimeRangeList2SQL(timeRanges, TimeStr)} " +
-                      $"AND ({FormulaStr}) in (select {FormulaStr} FROM " +
-                      $"{gunTable.TableName} GROUP BY {FormulaStr} " +
-                      $"HAVING count(*) >= {FilterCount});";
-                _db.Execute(cmd); // 创建时间段临时表，同时过滤数量
-                // 获取不重复的公式
-                cmd = $"SELECT DISTINCT *,count(*) AS total FROM {tmpTableName};";
-                var formulaList = _db.Query<GunDevelopTotal>(cmd);
-
-                foreach (var it in formulaList)
-                {
-                    cmd = $"DROP TABLE IF EXISTS {formulaTmpTable};";
-                    _db.Execute(cmd);
-                    cmd = $"CREATE TEMP TABLE {formulaTmpTable} " +
-                          $"AS SELECT * FROM {tmpTableName} " +
-                          $"WHERE mp == {it.mp} AND ammo == {it.ammo} AND mre == {it.mre} AND part == {it.part};";
-                    _db.Execute(cmd); //创建该公式的临时表
-
-                    cmd = $"SELECT DISTINCT gun_id FROM {formulaTmpTable}";
-                    // 获取不重复的gun_id列表
-                    var gunList = _db.QueryScalars<int>(cmd);
-
-                    it.time_id = timeID;
-                    it.timestamp = GetUTC();
-                    foreach (var gun_id in gunList)
+                UpdateTable<GunDevelop,GunDevelopTotal>(timeRanges,timeID,
+                    FormulaStr,"gun_id",
+                    total => $"mp == {total.mp} AND mre == {total.mre} AND " +
+                             $"ammo == {total.ammo} AND part == {total.part} ",
+                    (obj, total, id, timeId) =>
                     {
-                        cmd = $"SELECT count(*) FROM {formulaTmpTable} " +
-                              $"WHERE gun_id = {gun_id};";
-                        it.valid_total = _db.ExecuteScalar<int>(cmd);
-                        it.valid_rate = (double) it.valid_total / it.total;
-                        // 查询之前是否已经有相同公式的记录
-                        var list = _db.Table<GunDevelopTotal>().Where(v =>
-                                v.time_id == it.time_id && v.mp == it.mp && v.ammo == it.ammo && v.mre == it.mre &&
-                                v.part == it.part)
-                            .ToList();
-                        it.gun_id = gun_id;
-                        if (list.Count > 0)
-                        {
-                            it.id = list[0].id;
-                            _db.InsertOrReplace(it);
-                        }
-                        else
-                        {
-                            it.id = 0;
-                            _db.Insert(it);
-                        }
-                    }
-
-                    _db.Execute($"DROP table {formulaTmpTable};");
-                }
-
-                _db.Execute($"DROP TABLE {tmpTableName};");
+                        obj.time_id = timeId;
+                        obj.valid_total = total;
+                        obj.valid_rate = (double)obj.valid_total / obj.total;
+                        obj.gun_id = id;
+                        return obj;
+                    }, 
+                    total => $"mp == {total.mp} AND mre == {total.mre} AND " +
+                             $"ammo == {total.ammo} AND part == {total.part} AND " + 
+                             $"gun_id == {total.gun_id} AND time_id == {total.time_id}"
+                             );
             }
 
             /// <summary>
@@ -103,71 +56,23 @@ namespace enigma
             /// <param name="timeID">时间范围id</param>
             public void UpdateGunDevelopHeavyTotal(IEnumerable<TimeRange> timeRanges, int timeID)
             {
-                Log?.Information("Start UpdateGunDevelopHeavyTotal with time ID = {0}.", timeID);
-                var gunTable = _db.GetMapping<GunDevelopHeavy>();
-                var gunTotalTable = _db.GetMapping<GunDevelopHeavyTotal>();
-                string cmd;
-                const string tmpTableName = "TempGunDevelopHeavy";
-                const string formulaTmpTable = "TempGunDevelopHeavyFormula";
-
-                cmd = $"DROP TABLE IF EXISTS {tmpTableName};";
-                _db.Execute(cmd);
-                cmd = $"CREATE TEMP TABLE {tmpTableName} " +
-                      $"AS SELECT * FROM {gunTable.TableName} " +
-                      $"WHERE {TimeRange.TimeRangeList2SQL(timeRanges, TimeStr)} " +
-                      $"AND ({FormulaLevelStr}) in (select {FormulaLevelStr} FROM " +
-                      $"{gunTable.TableName} GROUP BY {FormulaLevelStr} " +
-                      $"HAVING count(*) >= {FilterCount});";
-                _db.Execute(cmd); // 创建时间段临时表，同时过滤数量
-                // 获取不重复的公式
-                cmd = $"SELECT DISTINCT *,count(*) AS total FROM {tmpTableName};";
-                var formulaList = _db.Query<GunDevelopHeavyTotal>(cmd);
-
-                foreach (var it in formulaList)
-                {
-                    cmd = $"DROP TABLE IF EXISTS {formulaTmpTable};";
-                    _db.Execute(cmd);
-                    cmd = $"CREATE TEMP TABLE {formulaTmpTable} " +
-                          $"AS SELECT * FROM {tmpTableName} " +
-                          $"WHERE mp == {it.mp} AND ammo == {it.ammo} " +
-                          $"AND mre == {it.mre} AND part == {it.part} " +
-                          $"AND input_level == {it.input_level}";
-                    _db.Execute(cmd); //创建该公式的临时表
-
-                    cmd = $"SELECT DISTINCT gun_id FROM {formulaTmpTable}";
-                    // 获取不重复的gun_id列表
-                    var gunList = _db.QueryScalars<int>(cmd);
-
-                    it.time_id = timeID;
-                    it.timestamp = GetUTC();
-                    foreach (var gun_id in gunList)
+                UpdateTable<GunDevelopHeavy, GunDevelopHeavyTotal>(timeRanges, timeID,
+                    FormulaLevelStr, "gun_id",
+                    total => $"mp == {total.mp} AND mre == {total.mre} " +
+                             $"ammo == {total.ammo} AND part == {total.part} AND input_level == {total.input_level}",
+                    (obj, total, id, timeId) =>
                     {
-                        cmd = $"SELECT count(*) FROM {formulaTmpTable} " +
-                              $"WHERE gun_id = {gun_id};";
-                        it.valid_total = _db.ExecuteScalar<int>(cmd);
-                        it.valid_rate = (double) it.valid_total / it.total;
-                        it.gun_id = gun_id;
-                        // 查询之前是否已经有相同公式的记录
-                        var list = _db.Table<GunDevelopHeavyTotal>().Where(v =>
-                                v.time_id == it.time_id && v.mp == it.mp && v.ammo == it.ammo && v.mre == it.mre
-                                && v.part == it.part && v.input_level == it.input_level)
-                            .ToList();
-                        if (list.Count > 0)
-                        {
-                            it.id = list[0].id;
-                            _db.InsertOrReplace(it);
-                        }
-                        else
-                        {
-                            it.id = 0;
-                            _db.Insert(it);
-                        }
-                    }
-
-                    _db.Execute($"DROP table {formulaTmpTable};");
-                }
-
-                _db.Execute($"DROP TABLE {tmpTableName};");
+                        obj.time_id = timeId;
+                        obj.valid_total = total;
+                        obj.valid_rate = (double)obj.valid_total / obj.total;
+                        obj.gun_id = id;
+                        return obj;
+                    },
+                    total => $"mp == {total.mp} AND mre == {total.mre} AND" +
+                             $"ammo == {total.ammo} AND part == {total.part} AND" +
+                             $"input_level == {total.input_level} AND gun_id == {total.gun_id} AND"+
+                             $"time_id == {total.time_id}"
+                );
             }
 
             /// <summary>
@@ -178,6 +83,199 @@ namespace enigma
             public void UpdateGunDevelopHeavyTotal(TimeRange timeRange, int timeID)
             {
                 UpdateGunDevelopHeavyTotal(new List<TimeRange> {timeRange}, timeID);
+            }
+
+            /// <summary>
+            /// 更新普通建造装备统计
+            /// </summary>
+            /// <param name="timeRanges">时间范围列表</param>
+            /// <param name="timeID">时间范围id</param>
+            public void UpdateEquipDevelopTotal(IEnumerable<TimeRange> timeRanges, int timeID)
+            {
+                UpdateTable<EquipDevelop, EquipDevelopTotal>(timeRanges, timeID,
+                    FormulaStr, "equip_id",
+                    total => $"mp == {total.mp} AND mre == {total.mre} AND " +
+                             $"ammo == {total.ammo} AND part == {total.part} ",
+                    (obj, total, id, timeId) =>
+                    {
+                        obj.time_id = timeId;
+                        obj.valid_total = total;
+                        obj.valid_rate = (double)obj.valid_total / obj.total;
+                        obj.equip_id = id;
+                        return obj;
+                    },
+                    total => $"mp == {total.mp} AND mre == {total.mre} AND " +
+                             $"ammo == {total.ammo} AND part == {total.part} AND " +
+                             $"equip_id == {total.equip_id} AND time_id == {total.time_id}"
+                );
+            }
+
+            /// <summary>
+            /// 更新普通建造装备统计
+            /// </summary>
+            /// <param name="timeRange">时间范围</param>
+            /// <param name="timeID">时间范围id</param>
+            public void UpdateEquipDevelopTotal(TimeRange timeRange, int timeID)
+            {
+                UpdateEquipDevelopTotal(new List<TimeRange> {timeRange}, timeID);
+            }
+
+            /// <summary>
+            /// 更新重型建造装备统计
+            /// </summary>
+            /// <param name="timeRanges">时间范围列表</param>
+            /// <param name="timeID">时间范围id</param>
+            public void UpdateEquipDevelopHeavyTotal(IEnumerable<TimeRange> timeRanges, int timeID)
+            {
+                // 更新出装备的
+                UpdateTable<EquipDevelopHeavy, EquipDevelopHeavyTotal>(timeRanges, timeID,
+                    FormulaLevelStr, "equip_id",
+                    total => $"mp == {total.mp} AND mre == {total.mre} AND " +
+                             $"ammo == {total.ammo} AND part == {total.part} AND " + 
+                            $"input_level == {total.input_level} ",
+                    (obj, total, id, timeId) =>
+                    {
+                        obj.time_id = timeId;
+                        obj.valid_total = total;
+                        obj.valid_rate = (double)obj.valid_total / obj.total;
+                        obj.equip_id = id;
+                        return obj;
+                    },
+                    total => $"mp == {total.mp} AND mre == {total.mre} AND " +
+                             $"ammo == {total.ammo} AND part == {total.part} AND " +
+                             $"equip_id == {total.equip_id} AND time_id == {total.time_id} AND " +
+                             $"input_level == {total.input_level} "
+                );
+                // 更新出妖精的
+                UpdateTable<EquipDevelopHeavy, EquipDevelopHeavyTotal>(timeRanges, timeID,
+                    FormulaLevelStr, "fairy_id",
+                    total => $"mp == {total.mp} AND mre == {total.mre} AND " +
+                             $"ammo == {total.ammo} AND part == {total.part} AND " + 
+                             $"input_level == {total.input_level} ",
+                    (obj, total, id, timeId) =>
+                    {
+                        obj.time_id = timeId;
+                        obj.valid_total = total;
+                        obj.valid_rate = (double)obj.valid_total / obj.total;
+                        obj.fairy_id = id;
+                        return obj;
+                    },
+                    total => $"mp == {total.mp} AND mre == {total.mre} AND " +
+                             $"ammo == {total.ammo} AND part == {total.part} AND " +
+                             $"fairy_id == {total.fairy_id} AND time_id == {total.time_id} AND " +
+                             $"input_level == {total.input_level} "
+                );
+            }
+
+            /// <summary>
+            /// 更新重型建造装备统计
+            /// </summary>
+            /// <param name="timeRange">时间范围</param>
+            /// <param name="timeID">时间范围id</param>
+            public void UpdateEquipDevelopHeavyTotal(TimeRange timeRange, int timeID)
+            {
+                UpdateEquipDevelopHeavyTotal(new List<TimeRange> {timeRange}, timeID);
+            }
+
+            /// <summary>
+            /// 根据输入创建公式语句的函数
+            /// </summary>
+            /// <typeparam name="T">记录/统计信息类型</typeparam>
+            /// <param name="obj">数据</param>
+            /// <returns>where后参数语句</returns>
+            private delegate string MakeFormulaCmd<T>(T obj) where T : RecordBase, new();
+            /// <summary>
+            /// 更新统计信息的函数
+            /// </summary>
+            /// <typeparam name="T">统计信息类型</typeparam>
+            /// <param name="obj">数据</param>
+            /// <param name="total">查询出的总量</param>
+            /// <param name="id">id</param>
+            /// <param name="timeId">时间id</param>
+            /// <returns>更新后的数据</returns>
+            private delegate T UpdateCount<T>(T obj,int total,int id,int timeId) where T : RecordBase, new();
+
+            /// <summary>
+            /// 更新统计表的抽象共用函数
+            /// </summary>
+            /// <typeparam name="TRecordType">单条记录类型</typeparam>
+            /// <typeparam name="TCountType">统计数据类型</typeparam>
+            /// <param name="timeRanges">时间列表</param>
+            /// <param name="timeID">时间id</param>
+            /// <param name="groupBy">统计的公式的group by参数</param>
+            /// <param name="idName">要统计的id的名称</param>
+            /// <param name="makeFormulaCmd">创建该公式的临时表的where语句参数</param>
+            /// <param name="updateCount">更新统计信息</param>
+            /// <param name="makeFindSameCmd">查找是否已有相同条件的统计信息的where语句参数</param>
+            private void UpdateTable<TRecordType,TCountType>
+                (IEnumerable<TimeRange> timeRanges, int timeID, string groupBy, string idName,
+                MakeFormulaCmd<TCountType> makeFormulaCmd, UpdateCount<TCountType> updateCount,
+                MakeFormulaCmd<TCountType> makeFindSameCmd)
+                where TRecordType : RecordBase, new()
+                where TCountType : RecordBase, new()
+            {
+                Log?.Information("Start Update {0} with time ID = {1}.", nameof(TCountType), timeID);
+                var recordTable = _db.GetMapping<TRecordType>();
+                var countTable = _db.GetMapping<TCountType>();
+                string cmd;
+                const string tmpTableName = "Temp" + nameof(TRecordType);
+                const string formulaTmpTable = "Temp" + nameof(TRecordType) + "Formula";
+
+                cmd = $"DROP TABLE IF EXISTS {tmpTableName};";
+                _db.Execute(cmd);
+                cmd = $"CREATE TEMP TABLE {tmpTableName} " +
+                      $"AS SELECT * FROM {recordTable.TableName} " +
+                      $"WHERE {TimeRange.TimeRangeList2SQL(timeRanges, TimeStr)} " +
+                      $"AND ({groupBy}) in (select {groupBy} FROM " +
+                      $"{recordTable.TableName} GROUP BY {groupBy} " +
+                      $"HAVING count(*) >= {FilterCount});";
+                _db.Execute(cmd); // 创建时间段临时表，同时过滤数量
+                // 获取不重复的公式
+                cmd = $"SELECT DISTINCT *,count(*) AS total FROM {tmpTableName};";
+                var formulaList = _db.Query<TCountType>(cmd);
+
+                foreach (var it in formulaList)
+                {
+                    cmd = $"DROP TABLE IF EXISTS {formulaTmpTable};";
+                    _db.Execute(cmd);
+                    //创建该公式的临时表
+                    cmd = $"CREATE TEMP TABLE {formulaTmpTable} " +
+                          $"AS SELECT * FROM {tmpTableName} WHERE " +
+                          makeFormulaCmd(it) + ";";
+                    _db.Execute(cmd);
+
+                    // 选取要查找的id（gun/equip等）
+                    cmd = $"SELECT DISTINCT {idName} FROM {formulaTmpTable}";
+                    var idList = _db.QueryScalars<int>(cmd);
+
+                    foreach (var id in idList)
+                    {
+                        cmd = $"SELECT count(*) FROM {formulaTmpTable} " +
+                              $"WHERE {idName} == {id};";
+                        var total = _db.QueryScalars<int>(cmd);
+                        updateCount(it, total[0], id, timeID);
+                        it.timestamp = GetUTC();
+                        // 查询之前是否已经有相同公式的记录
+                        cmd = $"SELECT * FROM {countTable.TableName} WHERE " +
+                              makeFindSameCmd(it) + ";";
+                        var list = _db.Query<TCountType>(cmd);
+                        if (list.Count > 0)
+                        {
+                            // 更新主键
+                            it.id = list[0].id;
+                            _db.InsertOrReplace(it);
+                        }
+                        else
+                        {
+                            it.id = 0;
+                            _db.Insert(it);
+                        }
+                    }
+
+                    _db.Execute($"DROP TABLE {formulaTmpTable};");
+                }
+
+                _db.Execute($"DROP TABLE {tmpTableName};");
             }
         }
     }
