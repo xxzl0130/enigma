@@ -725,6 +725,7 @@ namespace enigma
 
                         break;
                     }
+                    case "Mission/startTurn":
                     case "Mission/endTurn":
                     {
                         if (!dataJObject.ContainsKey("reward_gun"))

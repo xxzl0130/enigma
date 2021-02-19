@@ -60,7 +60,7 @@
             ],
             "spot_id": [
                 "spot_id"
-            ] 
+            ]
         },
         "response": {
             "enemy": [
@@ -70,7 +70,7 @@
             "battle_get_gun": [
                 "battle_get_gun"
             ],
-            "battle_get_equip":[
+            "battle_get_equip": [
                 "battle_get_equip"
             ],
             "battle_rank": [
@@ -85,7 +85,24 @@
                 "mission_win_result",
                 "reward_gun"
             ],
-            "reward_equip":[
+            "reward_equip": [
+                "mission_win_result",
+                "reward_equip"
+            ],
+            "mission_rank": [
+                "mission_win_result",
+                "rank"
+            ]
+        }
+    },
+    "Mission/startTurn": {
+        "request": {},
+        "response": {
+            "reward_gun": [
+                "mission_win_result",
+                "reward_gun"
+            ],
+            "reward_equip": [
                 "mission_win_result",
                 "reward_equip"
             ],
