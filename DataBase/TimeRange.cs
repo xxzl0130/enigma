@@ -18,6 +18,10 @@ namespace enigma
         /// </summary>
         NotIn
     }
+
+    /// <summary>
+    /// 时间范围，包含起止时间戳和类型
+    /// </summary>
     public class TimeRange
     {
         /// <summary>
@@ -63,10 +67,46 @@ namespace enigma
                 sb.Append(time.ToSQL(colName))
                     .Append(" AND ");
             }
-
+            
             // 排除最后一个and
             return sb.ToString(0, sb.Length - 5);
         }
     }
 
+    /// <summary>
+    /// 时间标记
+    /// </summary>
+    public class TimeMark
+    {
+        /// <summary>
+        /// 表示时间范围的集合
+        /// </summary>
+        public List<TimeRange> TimeRanges = new List<TimeRange>();
+        /// <summary>
+        /// 时间id
+        /// </summary>
+        public int ID = 0;
+        /// <summary>
+        /// 更新截止时间，过时不再更新，负数为永不过期
+        /// </summary>
+        public int UpdateLimitTime = 0;
+        /// <summary>
+        /// 更新间隔，负数为永不更新
+        /// </summary>
+        public int UpdateInterval = -1;
+        /// <summary>
+        /// 最后更新时间
+        /// </summary>
+        public int LastUpdateTime = -1;
+
+        public TimeMark()
+        {
+        }
+
+        public TimeMark(TimeRange timeRange, int id = 0)
+        {
+            TimeRanges = new List<TimeRange>(){timeRange};
+            ID = id;
+        }
+    }
 }

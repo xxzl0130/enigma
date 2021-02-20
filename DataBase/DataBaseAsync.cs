@@ -157,6 +157,26 @@ namespace enigma
             }
 
             /// <summary>
+            /// 更新推荐公式建造装备统计
+            /// </summary>
+            /// <param name="timeRanges">时间范围列表</param>
+            /// <param name="timeID">时间范围id</param>
+            public Task UpdateEquipProduceTotalAsync(IEnumerable<TimeRange> timeRanges, int timeID)
+            {
+                return Task.Factory.StartNew(() => { UpdateEquipProduceTotal(timeRanges, timeID); });
+            }
+
+            /// <summary>
+            /// 更新推荐公式建造装备统计
+            /// </summary>
+            /// <param name="timeRange">时间范围</param>
+            /// <param name="timeID">时间范围id</param>
+            public Task UpdateEquipProduceTotalAsync(TimeRange timeRange, int timeID)
+            {
+                return Task.Factory.StartNew(() => { UpdateEquipProduceTotal(timeRange, timeID); });
+            }
+
+            /// <summary>
             /// 更新战斗统计
             /// </summary>
             /// <param name="timeRanges">时间范围列表</param>

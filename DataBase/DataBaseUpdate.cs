@@ -121,6 +121,39 @@ namespace enigma
             }
 
             /// <summary>
+            /// 更新推荐公式建造装备统计
+            /// </summary>
+            /// <param name="timeRanges">时间范围列表</param>
+            /// <param name="timeID">时间范围id</param>
+            public void UpdateEquipProduceTotal(IEnumerable<TimeRange> timeRanges, int timeID)
+            {
+                UpdateTable<EquipProduce, EquipProduceTotal>(timeRanges, timeID,
+                    "formula_id", "equip_id",
+                    total => $"formula_id == {total.formula_id} ",
+                    (obj, total, id, timeId) =>
+                    {
+                        obj.time_id = timeId;
+                        obj.valid_total = total;
+                        obj.valid_rate = (double)obj.valid_total / obj.total;
+                        obj.equip_id = id;
+                        return obj;
+                    },
+                    total => $"formula_id == {total.formula_id} AND " +
+                             $"equip_id == {total.equip_id} AND time_id == {total.time_id}"
+                );
+            }
+
+            /// <summary>
+            /// 更新推荐公式建造装备统计
+            /// </summary>
+            /// <param name="timeRange">时间范围</param>
+            /// <param name="timeID">时间范围id</param>
+            public void UpdateEquipProduceTotal(TimeRange timeRange, int timeID)
+            {
+                UpdateEquipProduceTotal(new List<TimeRange> {timeRange}, timeID);
+            }
+
+            /// <summary>
             /// 更新重型建造装备统计
             /// </summary>
             /// <param name="timeRanges">时间范围列表</param>
