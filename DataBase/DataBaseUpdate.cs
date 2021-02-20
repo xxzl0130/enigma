@@ -353,6 +353,11 @@ namespace enigma
             private delegate T UpdateCount<T>(T obj,int total,int id,int timeId) where T : RecordBase, new();
 
             /// <summary>
+            /// UpdateTable调用次数统计，用于生产临时表名
+            /// </summary>
+            private int _updateCallCount = 0;
+
+            /// <summary>
             /// 更新统计表的抽象共用函数
             /// </summary>
             /// <typeparam name="TRecordType">单条记录类型</typeparam>
@@ -372,73 +377,85 @@ namespace enigma
                 where TRecordType : RecordBase, new()
                 where TCountType : RecordBase, new()
             {
-                Log?.Information("Start Update {0} with time ID = {1}.", typeof(TCountType).Name, timeID);
-                var recordTable = _db.GetMapping<TRecordType>();
-                var countTable = _db.GetMapping<TCountType>();
-                string cmd;
-                var tmpTableName = "Temp" + typeof(TRecordType).Name;
-                var formulaTmpTable = "Temp" + typeof(TRecordType).Name + "Formula";
-
-                cmd = $"DROP TABLE IF EXISTS {tmpTableName};";
-                _db.Execute(cmd);
-                cmd = $"CREATE TEMP TABLE {tmpTableName} " +
-                      $"AS SELECT * FROM {recordTable.TableName} " +
-                      $"WHERE {TimeRange.TimeRangeList2SQL(timeRanges, TimeStr)} " +
-                      $"AND ({groupBy}) in (select {groupBy} FROM " +
-                      $"{recordTable.TableName} GROUP BY {groupBy} " +
-                      $"HAVING count(*) >= {FilterCount});";
-                _db.Execute(cmd); // 创建时间段临时表，同时过滤数量
-                // 获取不重复的公式
-                cmd = $"SELECT *,count(*) AS total FROM {tmpTableName} " + 
-                    $"GROUP BY {groupBy}";
-                var formulaList = _db.Query<TCountType>(cmd);
-
-                foreach (var it in formulaList)
+                try
                 {
-                    cmd = $"DROP TABLE IF EXISTS {formulaTmpTable};";
-                    _db.Execute(cmd);
-                    //创建该公式的临时表
-                    cmd = $"CREATE TEMP TABLE {formulaTmpTable} " +
-                          $"AS SELECT * FROM {tmpTableName} WHERE " +
-                          makeFormulaCmd(it) + ";";
-                    _db.Execute(cmd);
+                    Log?.Information("Start Update {0} with time ID = {1} in thread pid = {2}.",
+                        typeof(TCountType).Name,
+                        timeID, Thread.CurrentThread.ManagedThreadId);
+                    var recordTable = _db.GetMapping<TRecordType>();
+                    var countTable = _db.GetMapping<TCountType>();
+                    string cmd;
+                    Interlocked.Increment(ref _updateCallCount);
+                    var tmpTableName = "Temp" + typeof(TRecordType).Name + "_" + _updateCallCount;
+                    var formulaTmpTable = "Temp" + typeof(TRecordType).Name + "Formula" + "_" + _updateCallCount;
 
-                    // 选取要查找的id（gun/equip等）
-                    cmd = $"SELECT DISTINCT {idName} FROM {formulaTmpTable}";
-                    var idList = _db.QueryScalars<int>(cmd);
+                    cmd = $"DROP TABLE IF EXISTS '{tmpTableName}';";
+                    _db.Execute(cmd);
+                    cmd = $"CREATE TEMP TABLE '{tmpTableName}' " +
+                          $"AS SELECT * FROM {recordTable.TableName} " +
+                          $"WHERE {TimeRange.TimeRangeList2SQL(timeRanges, TimeStr)} " +
+                          $"AND ({groupBy}) in (select {groupBy} FROM " +
+                          $"{recordTable.TableName} GROUP BY {groupBy} " +
+                          $"HAVING count(*) >= {FilterCount});";
+                    _db.Execute(cmd); // 创建时间段临时表，同时过滤数量
+                    // 获取不重复的公式
+                    cmd = $"SELECT *,count(*) AS total FROM '{tmpTableName}' " +
+                          $"GROUP BY {groupBy}";
+                    var formulaList = _db.Query<TCountType>(cmd);
 
-                    foreach (var id in idList)
+                    foreach (var it in formulaList)
                     {
-                        cmd = $"SELECT count(*) FROM {formulaTmpTable} " +
-                              $"WHERE {idName} == {id}";
-                        if (idName2 != null)
-                            cmd += $" AND {idName2} == {id};";
-                        else
-                            cmd += ";";
-                        var total = _db.QueryScalars<int>(cmd);
-                        updateCount(it, total[0], id, timeID);
-                        it.timestamp = GetUTC();
-                        // 查询之前是否已经有相同公式的记录
-                        cmd = $"SELECT * FROM {countTable.TableName} WHERE " +
-                              makeFindSameCmd(it) + ";";
-                        var list = _db.Query<TCountType>(cmd);
-                        if (list.Count > 0)
+                        cmd = $"DROP TABLE IF EXISTS '{formulaTmpTable}';";
+                        _db.Execute(cmd);
+                        //创建该公式的临时表
+                        cmd = $"CREATE TEMP TABLE '{formulaTmpTable}' " +
+                              $"AS SELECT * FROM '{tmpTableName}' WHERE " +
+                              makeFormulaCmd(it) + ";";
+                        _db.Execute(cmd);
+
+                        // 选取要查找的id（gun/equip等）
+                        cmd = $"SELECT DISTINCT {idName} FROM '{formulaTmpTable}'";
+                        var idList = _db.QueryScalars<int>(cmd);
+
+                        foreach (var id in idList)
                         {
-                            // 更新主键
-                            it.id = list[0].id;
-                            _db.InsertOrReplace(it);
+                            cmd = $"SELECT count(*) FROM {formulaTmpTable} " +
+                                  $"WHERE {idName} == {id}";
+                            if (idName2 != null)
+                                cmd += $" AND {idName2} == {id};";
+                            else
+                                cmd += ";";
+                            var total = _db.QueryScalars<int>(cmd);
+                            updateCount(it, total[0], id, timeID);
+                            it.timestamp = GetUTC();
+                            // 查询之前是否已经有相同公式的记录
+                            cmd = $"SELECT * FROM '{countTable.TableName}' WHERE " +
+                                  makeFindSameCmd(it) + ";";
+                            var list = _db.Query<TCountType>(cmd);
+                            if (list.Count > 0)
+                            {
+                                // 更新主键
+                                it.id = list[0].id;
+                                _db.InsertOrReplace(it);
+                            }
+                            else
+                            {
+                                it.id = 0;
+                                _db.Insert(it);
+                            }
                         }
-                        else
-                        {
-                            it.id = 0;
-                            _db.Insert(it);
-                        }
+
+                        _db.Execute($"DROP TABLE '{formulaTmpTable}';");
                     }
 
-                    _db.Execute($"DROP TABLE {formulaTmpTable};");
+                    _db.Execute($"DROP TABLE '{tmpTableName}';");
                 }
-
-                _db.Execute($"DROP TABLE {tmpTableName};");
+                catch (Exception e)
+                {
+                    Log?.Warning(e,"Error during Update {0} with time ID = {1} in thread pid = {2}.",
+                        typeof(TCountType).Name,
+                        timeID, Thread.CurrentThread.ManagedThreadId);
+                }
             }
 
             /// <summary>

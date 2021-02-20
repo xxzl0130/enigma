@@ -79,7 +79,8 @@ namespace enigma
             {
                 if (dataBasePath != null)
                     this.DataBasePath = dataBasePath;
-                _db = new SQLiteConnection(DataBasePath);
+                _db = new SQLiteConnection(DataBasePath, 
+                    SQLiteOpenFlags.Create | SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.FullMutex);
 
                 // 创建表，这个库会自动处理数据结构变更和重复创建
                 foreach (var type in _createTableList)

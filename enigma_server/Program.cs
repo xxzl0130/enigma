@@ -20,7 +20,7 @@ namespace enigma_server
         static void Main(string[] args)
         {
             var Log = new LoggerConfiguration()
-                .MinimumLevel.Verbose()
+                .MinimumLevel.Debug()
                 .WriteTo.Console()
                 .CreateLogger();
             using (var db = new SQLite.SQLiteConnection("test.db"))
@@ -32,16 +32,16 @@ namespace enigma_server
                 db.CreateTable<GunDevelop>();
                 var rd = new Random();
                 var gun = new GunDevelop();
-                //for (var j = 0; j < 100; ++j)
+                for (var j = 0; j < 100; ++j)
                 {
                     db.BeginTransaction();
-                    for (var i = 0; i < 100; ++i)
+                    for (var i = 0; i < 1000; ++i)
                     {
-                        gun.part = 30;
-                        gun.ammo = 30;
-                        gun.mp = 30;
-                        gun.mre = 30;
-                        gun.gun_id = rd.Next(1, 10);
+                        gun.part = 30 + rd.Next(0, 5);
+                        gun.ammo = 30 + rd.Next(0, 5);
+                        gun.mp = 30 + rd.Next(0, 5);
+                        gun.mre = 30 + rd.Next(0, 5);
+                        gun.gun_id = rd.Next(1, 20);
                         gun.timestamp = Utils.GetUTC() + rd.Next(-100, 100);
                         db.Insert(gun);
                     }
@@ -66,8 +66,12 @@ namespace enigma_server
                 
                 var timer = new Stopwatch();
                 timer.Start();
-                DB.Instance.UpdateGunDevelopTotal(
-                    new TimeRange {Start = Utils.GetUTC() - 200, End = Utils.GetUTC() + 200, Type = RangeType.In}, 1);
+                var task1 = DB.Instance.UpdateGunDevelopTotalAsync(
+                    new TimeRange {Start = Utils.GetUTC() + 30, End = Utils.GetUTC() + 60, Type = RangeType.In}, 1);
+                var task2 = DB.Instance.UpdateGunDevelopTotalAsync(
+                    new TimeRange {Start = Utils.GetUTC() + -50, End = Utils.GetUTC() - 20, Type = RangeType.In}, 2);
+                task1.Wait();
+                task2.Wait();
                 timer.Stop();
                 Log.Information("更新数据完成，耗时{0}s", timer.Elapsed.TotalSeconds);
                 
