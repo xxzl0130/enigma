@@ -79,7 +79,7 @@ namespace enigma
             {
                 if (dataBasePath != null)
                     this.DataBasePath = dataBasePath;
-                _db = new SQLiteConnection(DataBasePath, 
+                _db = new SQLiteConnection(DataBasePath,
                     SQLiteOpenFlags.Create | SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.FullMutex);
 
                 // 创建表，这个库会自动处理数据结构变更和重复创建
@@ -92,6 +92,7 @@ namespace enigma
                 _db.Trace = true;
                 _db.TimeExecution = true;
                 _db.Tracer = s => Log?.Verbose(s);
+                _db.BusyTimeout = TimeSpan.FromMilliseconds(5000);
             }
 
             /// <summary>

@@ -356,6 +356,7 @@ namespace enigma
             /// UpdateTable调用次数统计，用于生产临时表名
             /// </summary>
             private int _updateCallCount = 0;
+            private object _updateCallCountLock = new object();
 
             /// <summary>
             /// 更新统计表的抽象共用函数
@@ -385,9 +386,14 @@ namespace enigma
                     var recordTable = _db.GetMapping<TRecordType>();
                     var countTable = _db.GetMapping<TCountType>();
                     string cmd;
-                    Interlocked.Increment(ref _updateCallCount);
-                    var tmpTableName = "Temp" + typeof(TRecordType).Name + "_" + _updateCallCount;
-                    var formulaTmpTable = "Temp" + typeof(TRecordType).Name + "Formula" + "_" + _updateCallCount;
+                    string tmpTableName;
+                    string formulaTmpTable;
+                    lock (_updateCallCountLock)
+                    {
+                        ++_updateCallCount;
+                        tmpTableName = "Temp" + typeof(TRecordType).Name + "_" + _updateCallCount;
+                        formulaTmpTable = "Temp" + typeof(TRecordType).Name + "Formula" + "_" + _updateCallCount;
+                    }
 
                     cmd = $"DROP TABLE IF EXISTS '{tmpTableName}';";
                     _db.Execute(cmd);
@@ -452,9 +458,10 @@ namespace enigma
                 }
                 catch (Exception e)
                 {
-                    Log?.Warning(e,"Error during Update {0} with time ID = {1} in thread pid = {2}.",
+                    Log?.Warning(e,"Error during Update {0} with time ID = {1} in thread pid = {2}, result = {3}.",
                         typeof(TCountType).Name,
-                        timeID, Thread.CurrentThread.ManagedThreadId);
+                        timeID, Thread.CurrentThread.ManagedThreadId,
+                            ((SQLiteException)e).Result);
                 }
             }
 

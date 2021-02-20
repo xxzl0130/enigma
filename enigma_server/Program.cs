@@ -20,8 +20,10 @@ namespace enigma_server
         static void Main(string[] args)
         {
             var Log = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.Console()
+                //.MinimumLevel.Debug()
+                .MinimumLevel.Verbose()
+                //.WriteTo.Console()
+                .WriteTo.File("./log.txt")
                 .CreateLogger();
             using (var db = new SQLite.SQLiteConnection("test.db"))
             {
