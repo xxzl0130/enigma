@@ -20,37 +20,37 @@ namespace enigma_server
         static void Main(string[] args)
         {
             var Log = new LoggerConfiguration()
-                .MinimumLevel.Debug()
+                .MinimumLevel.Verbose()
                 .WriteTo.Console()
                 .CreateLogger();
-            //using (var db = new SQLite.SQLiteConnection("test.db"))
-            //{
-            //    var stw = new Stopwatch();
-            //    stw.Start();
-            //    db.DropTable<GunDevelop>();
-            //    db.DropTable<GunDevelopTotal>();
-            //    db.CreateTable<GunDevelop>();
-            //    var rd = new Random();
-            //    var gun = new GunDevelop();
-            //    for (var j = 0; j < 100; ++j)
-            //    {
-            //        db.BeginTransaction();
-            //        for (var i = 0; i < 10000; ++i)
-            //        {
-            //            gun.part = 30 + rd.Next(0, 5);
-            //            gun.ammo = 30 + rd.Next(0, 5);
-            //            gun.mp = 30 + rd.Next(0, 5);
-            //            gun.mre = 30 + rd.Next(0, 5);
-            //            gun.gun_id = rd.Next(1, 20);
-            //            gun.timestamp = Utils.GetUTC() + rd.Next(-100, 100);
-            //            db.Insert(gun);
-            //        }
-            //        db.Commit();
-            //    }
-            //    stw.Stop();
-            //    Log.Information("生成数据完成，耗时{0}s", stw.Elapsed.TotalSeconds);
-            //}
-            
+            using (var db = new SQLite.SQLiteConnection("test.db"))
+            {
+                var stw = new Stopwatch();
+                stw.Start();
+                db.DropTable<GunDevelop>();
+                db.DropTable<GunDevelopTotal>();
+                db.CreateTable<GunDevelop>();
+                var rd = new Random();
+                var gun = new GunDevelop();
+                //for (var j = 0; j < 100; ++j)
+                {
+                    db.BeginTransaction();
+                    for (var i = 0; i < 100; ++i)
+                    {
+                        gun.part = 30;
+                        gun.ammo = 30;
+                        gun.mp = 30;
+                        gun.mre = 30;
+                        gun.gun_id = rd.Next(1, 10);
+                        gun.timestamp = Utils.GetUTC() + rd.Next(-100, 100);
+                        db.Insert(gun);
+                    }
+                    db.Commit();
+                }
+                stw.Stop();
+                Log.Information("生成数据完成，耗时{0}s", stw.Elapsed.TotalSeconds);
+            }
+
             try
             {
                 Proxy.Instance.Port = 18888;
@@ -61,16 +61,16 @@ namespace enigma_server
                 Proxy.Instance.Start();
                 DB.Instance.DataBasePath = "test.db";
                 DB.Instance.Log = Log;
-                DB.Instance.FilterCount = 100;
+                DB.Instance.FilterCount = 1;
                 DB.Instance.Start();
-                /*
+                
                 var timer = new Stopwatch();
                 timer.Start();
                 DB.Instance.UpdateGunDevelopTotal(
-                    new TimeRange {Start = Utils.GetUTC() - 50, End = Utils.GetUTC() + 50, Type = RangeType.In}, 1);
+                    new TimeRange {Start = Utils.GetUTC() - 200, End = Utils.GetUTC() + 200, Type = RangeType.In}, 1);
                 timer.Stop();
                 Log.Information("更新数据完成，耗时{0}s", timer.Elapsed.TotalSeconds);
-                */
+                
             }
             catch (Exception e)
             {

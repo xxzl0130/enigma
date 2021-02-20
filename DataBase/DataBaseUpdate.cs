@@ -339,12 +339,12 @@ namespace enigma
                 where TRecordType : RecordBase, new()
                 where TCountType : RecordBase, new()
             {
-                Log?.Information("Start Update {0} with time ID = {1}.", nameof(TCountType), timeID);
+                Log?.Information("Start Update {0} with time ID = {1}.", typeof(TCountType).Name, timeID);
                 var recordTable = _db.GetMapping<TRecordType>();
                 var countTable = _db.GetMapping<TCountType>();
                 string cmd;
-                const string tmpTableName = "Temp" + nameof(TRecordType);
-                const string formulaTmpTable = "Temp" + nameof(TRecordType) + "Formula";
+                var tmpTableName = "Temp" + typeof(TRecordType).Name;
+                var formulaTmpTable = "Temp" + typeof(TRecordType).Name + "Formula";
 
                 cmd = $"DROP TABLE IF EXISTS {tmpTableName};";
                 _db.Execute(cmd);
@@ -356,7 +356,8 @@ namespace enigma
                       $"HAVING count(*) >= {FilterCount});";
                 _db.Execute(cmd); // 创建时间段临时表，同时过滤数量
                 // 获取不重复的公式
-                cmd = $"SELECT DISTINCT *,count(*) AS total FROM {tmpTableName};";
+                cmd = $"SELECT *,count(*) AS total FROM {tmpTableName} " + 
+                    $"GROUP BY {groupBy}";
                 var formulaList = _db.Query<TCountType>(cmd);
 
                 foreach (var it in formulaList)
