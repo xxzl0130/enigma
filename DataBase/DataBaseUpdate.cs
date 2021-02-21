@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq.Expressions;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -38,7 +39,7 @@ namespace enigma
                     total => $"mp == {total.mp} AND mre == {total.mre} AND " +
                              $"ammo == {total.ammo} AND part == {total.part} AND " + 
                              $"gun_id == {total.gun_id} AND time_id == {total.time_id}"
-                             ).Wait();
+                             );
             }
 
             /// <summary>
@@ -74,7 +75,7 @@ namespace enigma
                              $"ammo == {total.ammo} AND part == {total.part} AND" +
                              $"input_level == {total.input_level} AND gun_id == {total.gun_id} AND"+
                              $"time_id == {total.time_id}"
-                ).Wait();
+                );
             }
 
             /// <summary>
@@ -109,7 +110,7 @@ namespace enigma
                     total => $"mp == {total.mp} AND mre == {total.mre} AND " +
                              $"ammo == {total.ammo} AND part == {total.part} AND " +
                              $"equip_id == {total.equip_id} AND time_id == {total.time_id}"
-                ).Wait();
+                );
             }
 
             /// <summary>
@@ -142,7 +143,7 @@ namespace enigma
                     },
                     total => $"formula_id == {total.formula_id} AND " +
                              $"equip_id == {total.equip_id} AND time_id == {total.time_id}"
-                ).Wait();
+                );
             }
 
             /// <summary>
@@ -163,7 +164,7 @@ namespace enigma
             public void UpdateEquipDevelopHeavyTotal(IEnumerable<TimeRange> timeRanges, int timeID)
             {
                 // 更新出装备的
-                var equipTask = UpdateTable<EquipDevelopHeavy, EquipDevelopHeavyTotal>(timeRanges, timeID,
+                UpdateTable<EquipDevelopHeavy, EquipDevelopHeavyTotal>(timeRanges, timeID,
                     FormulaLevelStr, "equip_id",
                     total => $"mp == {total.mp} AND mre == {total.mre} AND " +
                              $"ammo == {total.ammo} AND part == {total.part} AND " + 
@@ -182,7 +183,7 @@ namespace enigma
                              $"input_level == {total.input_level} "
                 );
                 // 更新出妖精的
-                var fairyTask = UpdateTable<EquipDevelopHeavy, EquipDevelopHeavyTotal>(timeRanges, timeID,
+                UpdateTable<EquipDevelopHeavy, EquipDevelopHeavyTotal>(timeRanges, timeID,
                     FormulaLevelStr, "fairy_id",
                     total => $"mp == {total.mp} AND mre == {total.mre} AND " +
                              $"ammo == {total.ammo} AND part == {total.part} AND " + 
@@ -200,8 +201,6 @@ namespace enigma
                              $"fairy_id == {total.fairy_id} AND time_id == {total.time_id} AND " +
                              $"input_level == {total.input_level} "
                 );
-                equipTask.Wait();
-                fairyTask.Wait();
             }
 
             /// <summary>
@@ -222,7 +221,7 @@ namespace enigma
             public void UpdateMissionBattleTotal(IEnumerable<TimeRange> timeRanges, int timeID)
             {
                 // 不用搜救的枪记录
-                var gunTask1 = UpdateTable<MissionBattle, MissionBattleTotal>(timeRanges, timeID,
+                UpdateTable<MissionBattle, MissionBattleTotal>(timeRanges, timeID,
                     "enemy,battle_rank", "gun_id",
                     total => $"enemy == {total.enemy} AND battle_rank == {total.battle_rank} AND " +
                              $"(use_fairy_skill == 0 OR use_fairy_id != {SearchFairyID} OR fairy_skill_lv != 10) ",
@@ -240,7 +239,7 @@ namespace enigma
                     "gun_id_extra"
                 );
                 // 用搜救的枪记录
-                var gunTask2 = UpdateTable<MissionBattle, MissionBattleTotal>(timeRanges, timeID,
+                UpdateTable<MissionBattle, MissionBattleTotal>(timeRanges, timeID,
                     "enemy,battle_rank", "gun_id",
                     total => $"enemy == {total.enemy} AND battle_rank == {total.battle_rank} AND " +
                              $"use_fairy_skill == 1 AND use_fairy_id == {SearchFairyID} AND fairy_skill_lv == 10 ",
@@ -258,7 +257,7 @@ namespace enigma
                     "gun_id_extra"
                 );
                 // 装备记录，搜救无所谓
-                var equipTask = UpdateTable<MissionBattle, MissionBattleTotal>(timeRanges, timeID,
+                UpdateTable<MissionBattle, MissionBattleTotal>(timeRanges, timeID,
                     "enemy,battle_rank", "equip_id",
                     total => $"enemy == {total.enemy} AND battle_rank == {total.battle_rank} AND " +
                              $"use_fairy_skill == 1 AND use_fairy_id == {SearchFairyID} AND fairy_skill_lv == 10 ",
@@ -275,9 +274,6 @@ namespace enigma
                              $"equip_id == {total.equip_id} AND time_id == {total.time_id}",
                     "equip_id_extra"
                 );
-                gunTask1.Wait();
-                gunTask2.Wait();
-                equipTask.Wait();
             }
 
             /// <summary>
@@ -298,7 +294,7 @@ namespace enigma
             public void UpdateMissionFinishTotal(IEnumerable<TimeRange> timeRanges, int timeID)
             {
                 // 枪记录
-                var gunTask = UpdateTable<MissionFinish, MissionFinishTotal>(timeRanges, timeID,
+                UpdateTable<MissionFinish, MissionFinishTotal>(timeRanges, timeID,
                     "mission_id,mission_rank", "gun_id",
                     total => $"mission_id == {total.mission_id} AND mission_rank == {total.mission_rank} ",
                     (obj, total, id, timeId) =>
@@ -314,7 +310,7 @@ namespace enigma
                     "gun_id_extra"
                 );
                 // 装备记录
-                var equipTask = UpdateTable<MissionFinish, MissionFinishTotal>(timeRanges, timeID,
+                UpdateTable<MissionFinish, MissionFinishTotal>(timeRanges, timeID,
                     "mission_id,mission_rank", "equip_id",
                     total => $"mission_id == {total.mission_id} AND mission_rank == {total.mission_rank} ",
                     (obj, total, id, timeId) =>
@@ -329,8 +325,6 @@ namespace enigma
                              $"equip_id == {total.equip_id} AND time_id == {total.time_id}",
                     "equip_id_extra"
                 );
-                gunTask.Wait();
-                equipTask.Wait();
             }
 
             /// <summary>
@@ -380,20 +374,22 @@ namespace enigma
             /// <param name="makeFormulaCmd">创建该公式的临时表的where语句参数</param>
             /// <param name="updateCount">更新统计信息</param>
             /// <param name="makeFindSameCmd">查找是否已有相同条件的统计信息的where语句参数</param>
-            private async Task UpdateTable<TRecordType,TCountType>
+            private void UpdateTable<TRecordType,TCountType>
                 (IEnumerable<TimeRange> timeRanges, int timeID, string groupBy, string idName,
                 MakeFormulaCmd<TCountType> makeFormulaCmd, UpdateCount<TCountType> updateCount,
                 MakeFormulaCmd<TCountType> makeFindSameCmd, string idName2 = null)
                 where TRecordType : RecordBase, new()
                 where TCountType : RecordBase, new()
             {
+                Log?.Information("Start Update {0} with time ID = {1} in thread pid = {2}.",
+                    typeof(TCountType).Name,
+                    timeID, Thread.CurrentThread.ManagedThreadId);
+                var watch = new Stopwatch();
+                watch.Start();
                 try
                 {
-                    Log?.Information("Start Update {0} with time ID = {1} in thread pid = {2}.",
-                        typeof(TCountType).Name,
-                        timeID, Thread.CurrentThread.ManagedThreadId);
-                    var recordTable = await _db.GetMappingAsync<TRecordType>();
-                    var countTable = await _db.GetMappingAsync<TCountType>();
+                    var recordTable = _db.GetMapping<TRecordType>();
+                    var countTable = _db.GetMapping<TCountType>();
                     string cmd;
                     string tmpTableName;
                     string formulaTmpTable;
@@ -405,23 +401,23 @@ namespace enigma
                     }
 
                     cmd = $"DROP TABLE IF EXISTS '{tmpTableName}';";
-                    await _db.ExecuteAsync(cmd);
+                    _db.Execute(cmd);
                     cmd = $"CREATE TEMP TABLE '{tmpTableName}' " +
                           $"AS SELECT * FROM {recordTable.TableName} " +
                           $"WHERE {TimeRange.TimeRangeList2SQL(timeRanges, TimeStr)} " +
                           $"AND ({groupBy}) in (select {groupBy} FROM " +
                           $"{recordTable.TableName} GROUP BY {groupBy} " +
                           $"HAVING count(*) >= {FilterCount});";
-                    await _db.ExecuteAsync(cmd); // 创建时间段临时表，同时过滤数量
+                    _db.Execute(cmd); // 创建时间段临时表，同时过滤数量
                     // 获取不重复的公式
                     cmd = $"SELECT *,count(*) AS total FROM '{tmpTableName}' " +
                           $"GROUP BY {groupBy}";
-                    var formulaList = await _db.QueryAsync<TCountType>(cmd);
+                    var formulaList = _db.Query<TCountType>(cmd);
 
                     // 创建临时表
-                    await _db.ExecuteAsync($"CREATE TEMP TABLE '{formulaTmpTable}' " +
+                    _db.Execute($"CREATE TEMP TABLE '{formulaTmpTable}' " +
                                            $"AS SELECT * FROM {tmpTableName} LIMIT 1;");
-                    await _db.ExecuteAsync($"DELETE FROM '{formulaTmpTable}';");
+                    _db.Execute($"DELETE FROM '{formulaTmpTable}';");
 
                     var updateList = new List<TCountType>();
                     foreach (var it in formulaList)
@@ -430,11 +426,11 @@ namespace enigma
                         cmd = $"INSERT INTO '{formulaTmpTable}' " +
                               $"SELECT * FROM '{tmpTableName}' WHERE " +
                               makeFormulaCmd(it) + ";";
-                        await _db.ExecuteAsync(cmd);
+                        _db.Execute(cmd);
 
                         // 选取要查找的id（gun/equip等）
                         cmd = $"SELECT DISTINCT {idName} FROM '{formulaTmpTable}'";
-                        var idList = await _db.QueryScalarsAsync<int>(cmd);
+                        var idList = _db.QueryScalars<int>(cmd);
 
                         foreach (var id in idList)
                         {
@@ -444,30 +440,33 @@ namespace enigma
                                 cmd += $" AND {idName2} == {id};";
                             else
                                 cmd += ";";
-                            var total = await _db.QueryScalarsAsync<int>(cmd);
+                            var total = _db.QueryScalars<int>(cmd);
                             updateCount(it, total[0], id, timeID);
                             it.timestamp = GetUTC();
                             // 查询之前是否已经有相同公式的记录
                             cmd = $"SELECT * FROM '{countTable.TableName}' WHERE " +
                                   makeFindSameCmd(it) + ";";
-                            var list = await _db.QueryAsync<TCountType>(cmd);
+                            var list = _db.Query<TCountType>(cmd);
                             it.id = list.Count > 0 ? list[0].id : 0;
                             updateList.Add(Clone(it));
                         }
 
-                        await _db.ExecuteAsync($"DELETE FROM '{formulaTmpTable}';");
+                        _db.Execute($"DELETE FROM '{formulaTmpTable}';");
                     }
 
                     //统一更新
-                    await _db.RunInTransactionAsync(con =>
+                    using (_db.Lock())
                     {
+                        _db.BeginTransaction();
                         foreach (var obj in updateList)
                         {
-                            con.InsertOrReplace(obj);
+                            _db.InsertOrReplace(obj);
                         }
-                    });
-                    await _db.ExecuteAsync($"DROP TABLE '{formulaTmpTable}';");
-                    await _db.ExecuteAsync($"DROP TABLE '{tmpTableName}';");
+
+                        _db.Commit();
+                        _db.Execute($"DROP TABLE '{formulaTmpTable}';");
+                        _db.Execute($"DROP TABLE '{tmpTableName}';");
+                    }
                 }
                 catch (SQLiteException e)
                 {
@@ -482,6 +481,11 @@ namespace enigma
                         typeof(TCountType).Name,
                         timeID, Thread.CurrentThread.ManagedThreadId);
                 }
+                watch.Stop();
+                Log?.Information("Finish Update {0} with time ID = {1} in thread pid = {2} in {3}s .",
+                    typeof(TCountType).Name,
+                    timeID, Thread.CurrentThread.ManagedThreadId,
+                    watch.Elapsed.TotalSeconds);
             }
 
             /// <summary>
@@ -492,7 +496,7 @@ namespace enigma
             /// <summary>
             /// 深度拷贝
             /// </summary>
-            private T Clone<T>(T obj)
+            private static T Clone<T>(T obj)
             {
                 var memoryStream = new MemoryStream();
                 var formatter = new BinaryFormatter();
