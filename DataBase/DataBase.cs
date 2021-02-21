@@ -34,7 +34,7 @@ namespace enigma
             /// </summary>
             public int FilterCount = 100;
 
-            private SQLiteConnection _db;
+            private SQLiteAsyncConnection _db;
 
             /// <summary>
             /// spot_id到mission_id的映射，由提取好的数据库导入
@@ -75,24 +75,24 @@ namespace enigma
             /// 启动数据库运行
             /// </summary>
             /// <param name="dataBasePath">数据库路径</param>
-            public void Start(string dataBasePath = null)
+            public async Task Start(string dataBasePath = null)
             {
                 if (dataBasePath != null)
                     this.DataBasePath = dataBasePath;
-                _db = new SQLiteConnection(DataBasePath,
-                    SQLiteOpenFlags.Create | SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.FullMutex);
+                _db = new SQLiteAsyncConnection(DataBasePath,
+                    SQLiteOpenFlags.Create | SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.FullMutex)
+                {
+                    Trace = true, TimeExecution = true, Tracer = s => Log?.Verbose(s)
+                };
+
+                // debug log
+                await _db.SetBusyTimeoutAsync(TimeSpan.FromMilliseconds(5000));
 
                 // 创建表，这个库会自动处理数据结构变更和重复创建
                 foreach (var type in _createTableList)
                 {
-                    _db.CreateTable(type);
+                    await _db.CreateTableAsync(type);
                 }
-
-                // debug log
-                _db.Trace = true;
-                _db.TimeExecution = true;
-                _db.Tracer = s => Log?.Verbose(s);
-                _db.BusyTimeout = TimeSpan.FromMilliseconds(5000);
             }
 
             /// <summary>
@@ -100,7 +100,7 @@ namespace enigma
             /// </summary>
             /// <param name="data">数据</param>
             /// <param name="typename">数据类型名称，JSON里没有的话就要提供</param>
-            public void ReceiveDataObject(JObject data, string typename = null)
+            public async Task ReceiveDataObject(JObject data, string typename = null)
             {
                 object obj = null;
                 List<object> objList = null;
@@ -288,13 +288,13 @@ namespace enigma
                 if (obj != null)
                 {
                     Log?.Information("Database insert {obj}", obj.ToString());
-                    _db.Insert(obj);
+                    await _db.InsertAsync(obj);
                 }
 
                 if (objList != null)
                 {
                     Log?.Information("Database insert {n} objects.", objList.Count);
-                    _db.InsertAll(objList);
+                    await _db.InsertAllAsync(objList);
                 }
             }
             
@@ -302,16 +302,14 @@ namespace enigma
             /// 批量导入数据
             /// </summary>
             /// <param name="data">JSON格式数据，每个key对应一个type，包含一个array</param>
-            public void ImportData(JObject data)
+            public async Task ImportData(JObject data)
             {
                 foreach (var it in data)
                 {
-                    _db.BeginTransaction();
                     foreach (var obj in it.Value)
                     {
-                        ReceiveDataObject(obj.Value<JObject>(),it.Key);
+                        await ReceiveDataObject(obj.Value<JObject>(),it.Key);
                     }
-                    _db.Commit();
                 }
             }
             
@@ -321,21 +319,21 @@ namespace enigma
             /// <param name="from">开始时间戳</param>
             /// <param name="to">结束时间戳</param>
             /// <returns>数据</returns>
-            public JObject ExportData(int from, int to)
+            public async Task<JObject> ExportData(int from, int to)
             {
                 JObject data = new JObject();
 
                 var list = new List<object>();
-                list.AddRange(Query<GunDevelop>(from, to));
-                list.AddRange(Query<GunDevelopHeavy>(from, to));
+                list.AddRange(await Query<GunDevelop>(from, to));
+                list.AddRange(await Query<GunDevelopHeavy>(from, to));
                 data["Gun/developGun"] = JsonConvert.SerializeObject(list);
                 data["Mission/battleFinish"] = JsonConvert.SerializeObject(Query<MissionBattle>(from, to));
                 data["Mission/endTurn"] = JsonConvert.SerializeObject(Query<MissionFinish>(from, to));
                 data["Equip/produceDevelop"] = JsonConvert.SerializeObject(Query<EquipProduce>(from, to));
 
                 list = new List<object>();
-                list.AddRange(Query<EquipDevelop>(from, to));
-                list.AddRange(Query<EquipDevelopHeavy>(from, to));
+                list.AddRange(await Query<EquipDevelop>(from, to));
+                list.AddRange(await Query<EquipDevelopHeavy>(from, to));
                 data["Equip/develop"] = JsonConvert.SerializeObject(list);
 
                 return data;
@@ -348,10 +346,10 @@ namespace enigma
             /// <param name="fromUTC">开始时间</param>
             /// <param name="toUTC">结束时间</param>
             /// <returns>结果</returns>
-            private List<T> Query<T>(int fromUTC, int toUTC) where T : RecordBase, new()
+            private async Task<List<T>> Query<T>(int fromUTC, int toUTC) where T : RecordBase, new()
             {
                 Log?.Debug("Query {name} from {from} to {to}.", typeof(T).Name, fromUTC, toUTC);
-                return Query<T>(v => v.timestamp >= fromUTC && v.timestamp <= toUTC);
+                return await Query<T>(v => v.timestamp >= fromUTC && v.timestamp <= toUTC);
             }
 
             /// <summary>
@@ -360,9 +358,9 @@ namespace enigma
             /// <typeparam name="T">数据类型</typeparam>
             /// <param name="expression">规则表达式</param>
             /// <returns>数据结果</returns>
-            private List<T> Query<T>(Expression<Func<T,bool>> expression) where T : RecordBase, new()
+            private async Task<List<T>> Query<T>(Expression<Func<T,bool>> expression) where T : RecordBase, new()
             {
-                return _db.Table<T>().Where(expression).ToList();
+                return await _db.Table<T>().Where(expression).ToListAsync();
             }
 
             /// <summary>
@@ -372,8 +370,7 @@ namespace enigma
             public void Backup(string backDataBasePath)
             {
                 Log?.Information("Backup database to {path}.", backDataBasePath);
-                _db.Backup(backDataBasePath);
-                Log?.Information("Database backup complete.");
+                _db.BackupAsync(backDataBasePath);
             }
 
             /// <summary>

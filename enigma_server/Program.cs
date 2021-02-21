@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using System.Web;
 using enigma;
 using enigma.proxy;
@@ -64,7 +65,7 @@ namespace enigma_server
                 DB.Instance.DataBasePath = "test.db";
                 DB.Instance.Log = Log;
                 DB.Instance.FilterCount = 1;
-                DB.Instance.Start();
+                DB.Instance.Start().Wait();
                 
                 var timer = new Stopwatch();
                 timer.Start();
@@ -88,9 +89,9 @@ namespace enigma_server
             Console.ReadKey();
         }
 
-        private static void DataEvent(Newtonsoft.Json.Linq.JObject jsonObject)
+        private static async void DataEvent(Newtonsoft.Json.Linq.JObject jsonObject)
         {
-            DB.Instance.ReceiveDataObjectAsync(jsonObject);
+            await DB.Instance.ReceiveDataObject(jsonObject);
         }
     }
 }
