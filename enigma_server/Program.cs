@@ -21,10 +21,10 @@ namespace enigma_server
         static void Main(string[] args)
         {
             var Log = new LoggerConfiguration()
-                //.MinimumLevel.Debug()
-                .MinimumLevel.Verbose()
-                //.WriteTo.Console()
-                .WriteTo.File("./log.txt")
+                .MinimumLevel.Debug()
+                //.MinimumLevel.Verbose()
+                .WriteTo.Console()
+                //.WriteTo.File("./log.txt")
                 .CreateLogger();
             using (var db = new SQLite.SQLiteConnection("test.db"))
             {
@@ -71,10 +71,11 @@ namespace enigma_server
                 timer.Start();
                 var task1 = DB.Instance.UpdateGunDevelopTotalAsync(
                     new TimeRange {Start = Utils.GetUTC() + 30, End = Utils.GetUTC() + 60, Type = RangeType.In}, 1);
-                var task2 = DB.Instance.UpdateGunDevelopTotalAsync(
-                    new TimeRange {Start = Utils.GetUTC() + -50, End = Utils.GetUTC() - 20, Type = RangeType.In}, 2);
+                //var task2 = DB.Instance.UpdateGunDevelopTotalAsync(
+                //    new TimeRange {Start = Utils.GetUTC() + -50, End = Utils.GetUTC() - 20, Type = RangeType.In}, 2);
+                //
                 task1.Wait();
-                task2.Wait();
+                //task2.Wait();
                 timer.Stop();
                 Log.Information("更新数据完成，耗时{0}s", timer.Elapsed.TotalSeconds);
                 

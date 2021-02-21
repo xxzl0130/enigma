@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq.Expressions;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -416,13 +418,17 @@ namespace enigma
                           $"GROUP BY {groupBy}";
                     var formulaList = await _db.QueryAsync<TCountType>(cmd);
 
+                    // 创建临时表
+                    await _db.ExecuteAsync($"CREATE TEMP TABLE '{formulaTmpTable}' " +
+                                           $"AS SELECT * FROM {tmpTableName} LIMIT 1;");
+                    await _db.ExecuteAsync($"DELETE FROM '{formulaTmpTable}';");
+
+                    var updateList = new List<TCountType>();
                     foreach (var it in formulaList)
                     {
-                        cmd = $"DROP TABLE IF EXISTS '{formulaTmpTable}';";
-                        await _db.ExecuteAsync(cmd);
                         //创建该公式的临时表
-                        cmd = $"CREATE TEMP TABLE '{formulaTmpTable}' " +
-                              $"AS SELECT * FROM '{tmpTableName}' WHERE " +
+                        cmd = $"INSERT INTO '{formulaTmpTable}' " +
+                              $"SELECT * FROM '{tmpTableName}' WHERE " +
                               makeFormulaCmd(it) + ";";
                         await _db.ExecuteAsync(cmd);
 
@@ -445,30 +451,36 @@ namespace enigma
                             cmd = $"SELECT * FROM '{countTable.TableName}' WHERE " +
                                   makeFindSameCmd(it) + ";";
                             var list = await _db.QueryAsync<TCountType>(cmd);
-                            if (list.Count > 0)
-                            {
-                                // 更新主键
-                                it.id = list[0].id;
-                                await _db.InsertOrReplaceAsync(it);
-                            }
-                            else
-                            {
-                                it.id = 0;
-                                await _db.InsertAsync(it);
-                            }
+                            it.id = list.Count > 0 ? list[0].id : 0;
+                            updateList.Add(Clone(it));
                         }
 
-                        await _db.ExecuteAsync($"DROP TABLE '{formulaTmpTable}';");
+                        await _db.ExecuteAsync($"DELETE FROM '{formulaTmpTable}';");
                     }
 
+                    //统一更新
+                    await _db.RunInTransactionAsync(con =>
+                    {
+                        foreach (var obj in updateList)
+                        {
+                            con.InsertOrReplace(obj);
+                        }
+                    });
+                    await _db.ExecuteAsync($"DROP TABLE '{formulaTmpTable}';");
                     await _db.ExecuteAsync($"DROP TABLE '{tmpTableName}';");
+                }
+                catch (SQLiteException e)
+                {
+                    Log?.Warning(e, "Error during Update {0} with time ID = {1} in thread pid = {2}, result = {3}.",
+                        typeof(TCountType).Name,
+                        timeID, Thread.CurrentThread.ManagedThreadId,
+                        ((SQLiteException)e).Result);
                 }
                 catch (Exception e)
                 {
-                    Log?.Warning(e,"Error during Update {0} with time ID = {1} in thread pid = {2}, result = {3}.",
+                    Log?.Warning(e,"Error during Update {0} with time ID = {1} in thread pid = {2}.",
                         typeof(TCountType).Name,
-                        timeID, Thread.CurrentThread.ManagedThreadId,
-                            ((SQLiteException)e).Result);
+                        timeID, Thread.CurrentThread.ManagedThreadId);
                 }
             }
 
@@ -476,6 +488,18 @@ namespace enigma
             /// 搜救妖精id
             /// </summary>
             private const int SearchFairyID = 16;
+
+            /// <summary>
+            /// 深度拷贝
+            /// </summary>
+            private T Clone<T>(T obj)
+            {
+                var memoryStream = new MemoryStream();
+                var formatter = new BinaryFormatter();
+                formatter.Serialize(memoryStream, obj);
+                memoryStream.Position = 0;
+                return (T)formatter.Deserialize(memoryStream);
+            }
         }
     }
 }

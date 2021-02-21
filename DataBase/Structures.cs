@@ -11,6 +11,7 @@ namespace enigma
         /// <summary>
         /// 数据库记录的基础定义
         /// </summary>
+        [Serializable]
         public class RecordBase
         {
             [PrimaryKey, AutoIncrement] public int id { get; set; }
@@ -25,6 +26,7 @@ namespace enigma
         /// 普通建造枪
         /// </summary>
         [Table("GunDevelop")] // 表名调整为按类型统一开头，下同
+        [Serializable]
         public class GunDevelop : RecordBase
         {
             /// <summary>
@@ -57,6 +59,7 @@ namespace enigma
         /// 普通建造统计表
         /// </summary>
         [Table("GunDevelopTotal")]
+        [Serializable]
         public class GunDevelopTotal : GunDevelop
         {
             /// <summary>
@@ -84,6 +87,7 @@ namespace enigma
         /// 重型建造枪
         /// </summary>
         [Table("GunDevelopHeavy")]
+        [Serializable]
         public class GunDevelopHeavy : RecordBase
         {
             /// <summary>
@@ -121,6 +125,7 @@ namespace enigma
         /// 重型人型建造统计表
         /// </summary>
         [Table("GunDevelopHeavyTotal")]
+        [Serializable]
         public class GunDevelopHeavyTotal : GunDevelopHeavy
         {
             /// <summary>
@@ -148,6 +153,7 @@ namespace enigma
         /// 推荐公式建造装备
         /// </summary>
         [Table("EquipProduce")]
+        [Serializable]
         public class EquipProduce : RecordBase
         {
             /// <summary>
@@ -165,6 +171,7 @@ namespace enigma
         /// 推荐公式建造装备统计表
         /// </summary>
         [Table("EquipProduceTotal")]
+        [Serializable]
         public class EquipProduceTotal : EquipProduce
         {
 
@@ -193,6 +200,7 @@ namespace enigma
         /// 普通建造装备
         /// </summary>
         [Table("EquipDevelop")]
+        [Serializable]
         public class EquipDevelop : RecordBase
         {
             /// <summary>
@@ -225,6 +233,7 @@ namespace enigma
         /// 普通建造装备统计表
         /// </summary>
         [Table("EquipDevelopTotal")]
+        [Serializable]
         public class EquipDevelopTotal : EquipDevelop
         {
 
@@ -253,6 +262,7 @@ namespace enigma
         /// 装备重型建造
         /// </summary>
         [Table("EquipDevelopHeavy")]
+        [Serializable]
         public class EquipDevelopHeavy : RecordBase
         {
             /// <summary>
@@ -305,6 +315,7 @@ namespace enigma
         /// 重型建造装备统计表
         /// </summary>
         [Table("EquipDevelopHeavyTotal")]
+        [Serializable]
         public class EquipDevelopHeavyTotal : EquipDevelopHeavy
         {
             /// <summary>
@@ -332,6 +343,7 @@ namespace enigma
         /// 一场战斗结束的数据
         /// </summary>
         [Table("MissionBattle")]
+        [Serializable]
         public class MissionBattle : RecordBase
         {
             /// <summary>
@@ -389,6 +401,7 @@ namespace enigma
         /// 战斗结束的数据统计
         /// </summary>
         [Table("MissionBattleTotal")]
+        [Serializable]
         public class MissionBattleTotal : RecordBase
         {
             /// <summary>
@@ -456,6 +469,7 @@ namespace enigma
         /// 整场战役结束的信息
         /// </summary>
         [Table("MissionFinish")]
+        [Serializable]
         public class MissionFinish : RecordBase
         {
             /// <summary>
@@ -498,6 +512,7 @@ namespace enigma
         /// 整场战役结束的信息统计
         /// </summary>
         [Table("MissionFinishTotal")]
+        [Serializable]
         public class MissionFinishTotal : RecordBase
         {
             /// <summary>

@@ -287,13 +287,13 @@ namespace enigma
 
                 if (obj != null)
                 {
-                    Log?.Information("Database insert {obj}", obj.ToString());
+                    Log?.Debug("Database insert {obj}", obj.ToString());
                     await _db.InsertAsync(obj);
                 }
 
                 if (objList != null)
                 {
-                    Log?.Information("Database insert {n} objects.", objList.Count);
+                    Log?.Debug("Database insert {n} objects.", objList.Count);
                     await _db.InsertAllAsync(objList);
                 }
             }
@@ -304,13 +304,20 @@ namespace enigma
             /// <param name="data">JSON格式数据，每个key对应一个type，包含一个array</param>
             public async Task ImportData(JObject data)
             {
-                foreach (var it in data)
+                await _db.RunInTransactionAsync(async con =>
                 {
-                    foreach (var obj in it.Value)
+                    foreach (var it in data)
                     {
-                        await ReceiveDataObject(obj.Value<JObject>(),it.Key);
+                        var count = 0;
+                        foreach (var obj in it.Value)
+                        {
+                            await ReceiveDataObject(obj.Value<JObject>(), it.Key);
+                            ++count;
+                        }
+
+                        Log?.Information("Import {n} {type} records.", count, it.Key);
                     }
-                }
+                });
             }
             
             /// <summary>
