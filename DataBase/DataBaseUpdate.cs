@@ -420,6 +420,8 @@ namespace enigma
                     _db.Execute($"DELETE FROM '{formulaTmpTable}';");
 
                     var updateList = new List<TCountType>();
+                    var insertList = new List<TCountType>();
+                    var timestamp = GetUTC();
                     foreach (var it in formulaList)
                     {
                         //创建该公式的临时表
@@ -427,7 +429,7 @@ namespace enigma
                               $"SELECT * FROM '{tmpTableName}' WHERE " +
                               makeFormulaCmd(it) + ";";
                         _db.Execute(cmd);
-
+                        it.timestamp = timestamp;
                         // 选取要查找的id（gun/equip等）
                         cmd = $"SELECT DISTINCT {idName} FROM '{formulaTmpTable}'";
                         var idList = _db.QueryScalars<int>(cmd);
@@ -442,13 +444,22 @@ namespace enigma
                                 cmd += ";";
                             var total = _db.QueryScalars<int>(cmd);
                             updateCount(it, total[0], id, timeID);
-                            it.timestamp = GetUTC();
                             // 查询之前是否已经有相同公式的记录
                             cmd = $"SELECT * FROM '{countTable.TableName}' WHERE " +
                                   makeFindSameCmd(it) + ";";
                             var list = _db.Query<TCountType>(cmd);
                             it.id = list.Count > 0 ? list[0].id : 0;
                             updateList.Add(Clone(it));
+                            if (list.Count > 0)
+                            {
+                                it.id = list[0].id;
+                                updateList.Add(Clone(it));
+                            }
+                            else
+                            {
+                                it.id = 0;
+                                insertList.Add(Clone(it));
+                            }
                         }
 
                         _db.Execute($"DELETE FROM '{formulaTmpTable}';");
@@ -462,10 +473,14 @@ namespace enigma
                         {
                             _db.InsertOrReplace(obj);
                         }
+                        foreach (var obj in insertList)
+                        {
+                            _db.Insert(obj);
+                        }
 
-                        _db.Commit();
                         _db.Execute($"DROP TABLE '{formulaTmpTable}';");
                         _db.Execute($"DROP TABLE '{tmpTableName}';");
+                        _db.Commit();
                     }
                 }
                 catch (SQLiteException e)

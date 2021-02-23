@@ -26,33 +26,40 @@ namespace enigma_server
                 .WriteTo.Console()
                 //.WriteTo.File("./log.txt")
                 .CreateLogger();
-            //using (var db = new SQLite.SQLiteConnection("test.db"))
-            //{
-            //    var stw = new Stopwatch();
-            //    stw.Start();
-            //    db.DropTable<GunDevelop>();
-            //    db.DropTable<GunDevelopTotal>();
-            //    db.CreateTable<GunDevelop>();
-            //    var rd = new Random();
-            //    var gun = new GunDevelop();
-            //    for (var j = 0; j < 100; ++j)
-            //    {
-            //        db.BeginTransaction();
-            //        for (var i = 0; i < 10000; ++i)
-            //        {
-            //            gun.part = 30 + rd.Next(0, 5);
-            //            gun.ammo = 30 + rd.Next(0, 5);
-            //            gun.mp = 30 + rd.Next(0, 5);
-            //            gun.mre = 30 + rd.Next(0, 5);
-            //            gun.gun_id = rd.Next(1, 20);
-            //            gun.timestamp = rd.Next(-100, 100);
-            //            db.Insert(gun);
-            //        }
-            //        db.Commit();
-            //    }
-            //    stw.Stop();
-            //    Log.Information("生成数据完成，耗时{0}s", stw.Elapsed.TotalSeconds);
-            //}
+            using (var db = new SQLite.SQLiteConnection("test.db"))
+            {
+                //var obj = new GunDevelopTotal()
+                //{
+                //    ammo = 30, mp = 30, mre = 30, part = 30, gun_id = 233, id = 1, time_id = 1, timestamp = 0,
+                //    total = 100, valid_total = 0, valid_rate = 0
+                //};
+
+                //db.Update(obj);
+                //    var stw = new Stopwatch();
+                //    stw.Start();
+                //    db.DropTable<GunDevelop>();
+                    db.DropTable<GunDevelopTotal>();
+                //    db.CreateTable<GunDevelop>();
+                //    var rd = new Random();
+                //    var gun = new GunDevelop();
+                //    for (var j = 0; j < 100; ++j)
+                //    {
+                //        db.BeginTransaction();
+                //        for (var i = 0; i < 10000; ++i)
+                //        {
+                //            gun.part = 30 + rd.Next(0, 5);
+                //            gun.ammo = 30 + rd.Next(0, 5);
+                //            gun.mp = 30 + rd.Next(0, 5);
+                //            gun.mre = 30 + rd.Next(0, 5);
+                //            gun.gun_id = rd.Next(1, 20);
+                //            gun.timestamp = rd.Next(-100, 100);
+                //            db.Insert(gun);
+                //        }
+                //        db.Commit();
+                //    }
+                //    stw.Stop();
+                //    Log.Information("生成数据完成，耗时{0}s", stw.Elapsed.TotalSeconds);
+            }
 
             try
             {
