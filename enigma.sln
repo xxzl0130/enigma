@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GF_CipherSharp", "GF_Decode
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "enigma_server", "enigma_server\enigma_server.csproj", "{A57629E8-86C3-4273-9BBC-DC0E1566F993}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataBase", "DataBase\DataBase.csproj", "{54194A65-7912-42FE-AFB7-F353565C3498}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataBase", "DataBase\DataBase.csproj", "{54194A65-7912-42FE-AFB7-F353565C3498}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Http", "Http\Http.csproj", "{F3BA9974-6CDC-41B2-B085-ED9E3557ECF0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{54194A65-7912-42FE-AFB7-F353565C3498}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{54194A65-7912-42FE-AFB7-F353565C3498}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{54194A65-7912-42FE-AFB7-F353565C3498}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F3BA9974-6CDC-41B2-B085-ED9E3557ECF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F3BA9974-6CDC-41B2-B085-ED9E3557ECF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F3BA9974-6CDC-41B2-B085-ED9E3557ECF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F3BA9974-6CDC-41B2-B085-ED9E3557ECF0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
