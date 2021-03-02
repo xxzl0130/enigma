@@ -27,15 +27,15 @@ namespace enigma
         /// <summary>
         /// 类型
         /// </summary>
-        public RangeType Type;
+        public RangeType Type { get; set; }
         /// <summary>
         /// 起始时间UTC时间戳
         /// </summary>
-        public int Start;
+        public int Start { get; set; }
         /// <summary>
         /// 结束时间UTC时间戳
         /// </summary>
-        public int End;
+        public int End { get; set; }
 
         /// <summary>
         /// 转换为SQL语句
@@ -81,32 +81,40 @@ namespace enigma
         /// <summary>
         /// 表示时间范围的集合
         /// </summary>
-        public List<TimeRange> TimeRanges = new List<TimeRange>();
+        public List<TimeRange> TimeRanges { get; set; }
         /// <summary>
         /// 时间id
         /// </summary>
-        public int ID = 0;
+        public int ID { get; set; }
         /// <summary>
         /// 更新截止时间，过时不再更新，负数为永不过期
         /// </summary>
-        public int UpdateLimitTime = 0;
+        public int UpdateLimitTime { get; set; }
         /// <summary>
         /// 更新间隔，负数为永不更新
         /// </summary>
-        public int UpdateInterval = -1;
+        public int UpdateInterval { get; set; }
         /// <summary>
         /// 最后更新时间
         /// </summary>
-        public int LastUpdateTime = -1;
+        public int LastUpdateTime { get; set; }
 
         public TimeMark()
         {
+            TimeRanges = new List<TimeRange>();
+            UpdateInterval = -1;
+            LastUpdateTime = 0;
+            UpdateLimitTime = -1;
+            ID = 0;
         }
 
         public TimeMark(TimeRange timeRange, int id = 0)
         {
             TimeRanges = new List<TimeRange>(){timeRange};
             ID = id;
+            UpdateInterval = -1;
+            LastUpdateTime = 0;
+            UpdateLimitTime = -1;
         }
     }
 }

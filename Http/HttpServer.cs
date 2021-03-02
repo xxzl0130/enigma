@@ -65,6 +65,18 @@ namespace enigma
                 /// 是否启用Http自带的log
                 /// </summary>
                 public bool HttpLog = false;
+                /// <summary>
+                /// 跨域域名列表，逗号分隔，下同
+                /// </summary>
+                public string CorsOrigins = string.Empty;
+                /// <summary>
+                /// 跨域请求头列表
+                /// </summary>
+                public string CorsHeaders = string.Empty;
+                /// <summary>
+                /// 跨域方法列表
+                /// </summary>
+                public string CorsMethods = string.Empty;
             }
 
             /// <summary>
@@ -114,7 +126,6 @@ namespace enigma
                     .WithLocalSessionManager(m =>
                     {
                         m.SessionDuration = TimeSpan.FromDays(1);
-                        m.CookieDuration = TimeSpan.FromDays(14);
                     })
                     .WithWebApi("/api/admin", m => m.WithController<AdminController>())
                     .WithWebApi("/api", m => m.WithController<HttpController>());
@@ -123,7 +134,12 @@ namespace enigma
                     _server.WithStaticFolder(Options.StaticFolderRoute, Options.StaticFolderPath,
                         false, m => m.WithContentCaching(true));
                 }
-                
+
+                if (!string.IsNullOrEmpty(Options.CorsOrigins))
+                {
+                    _server.WithCors(Options.CorsOrigins, Options.CorsHeaders, Options.CorsMethods);
+                }
+
                 _server.RunAsync(_httpCts.Token);
             }
 

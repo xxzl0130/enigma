@@ -9,6 +9,7 @@ using System.Web;
 using enigma;
 using enigma.proxy;
 using enigma.DataBase;
+using enigma.Http;
 using GF_CipherSharp;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -26,41 +27,7 @@ namespace enigma_server
                 .WriteTo.Console()
                 //.WriteTo.File("./log.txt")
                 .CreateLogger();
-            using (var db = new SQLite.SQLiteConnection("test.db"))
-            {
-                //var obj = new GunDevelopTotal()
-                //{
-                //    ammo = 30, mp = 30, mre = 30, part = 30, gun_id = 233, id = 1, time_id = 1, timestamp = 0,
-                //    total = 100, valid_total = 0, valid_rate = 0
-                //};
-
-                //db.Update(obj);
-                //    var stw = new Stopwatch();
-                //    stw.Start();
-                //    db.DropTable<GunDevelop>();
-                    db.DropTable<GunDevelopTotal>();
-                //    db.CreateTable<GunDevelop>();
-                //    var rd = new Random();
-                //    var gun = new GunDevelop();
-                //    for (var j = 0; j < 100; ++j)
-                //    {
-                //        db.BeginTransaction();
-                //        for (var i = 0; i < 10000; ++i)
-                //        {
-                //            gun.part = 30 + rd.Next(0, 5);
-                //            gun.ammo = 30 + rd.Next(0, 5);
-                //            gun.mp = 30 + rd.Next(0, 5);
-                //            gun.mre = 30 + rd.Next(0, 5);
-                //            gun.gun_id = rd.Next(1, 20);
-                //            gun.timestamp = rd.Next(-100, 100);
-                //            db.Insert(gun);
-                //        }
-                //        db.Commit();
-                //    }
-                //    stw.Stop();
-                //    Log.Information("生成数据完成，耗时{0}s", stw.Elapsed.TotalSeconds);
-            }
-
+            
             try
             {
                 Proxy.Instance.Port = 18888;
@@ -73,22 +40,7 @@ namespace enigma_server
                 DB.Instance.Log = Log;
                 DB.Instance.FilterCount = 1;
                 DB.Instance.Start();
-
-                for (var i = 0; i < 1; ++i)
-                {
-                    var timer = new Stopwatch();
-                    timer.Start();
-                    var task1 = DB.Instance.UpdateGunDevelopTotalAsync(
-                        new TimeRange {Start = +30, End = +60, Type = RangeType.In}, 1);
-
-                    var task2 = DB.Instance.UpdateGunDevelopTotalAsync(
-                        new TimeRange {Start = -50, End = -20, Type = RangeType.In}, 2);
-
-                    task1.Wait();
-                    task2.Wait();
-                    timer.Stop();
-                    Log.Information("更新数据完成，耗时{0}s", timer.Elapsed.TotalSeconds);
-                }
+                HttpServer.Instance.Start(new HttpServer.HttpOptions(){Port = 8877,CorsHeaders = "*"});
             }
             catch (Exception e)
             {

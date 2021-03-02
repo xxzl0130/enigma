@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using EmbedIO;
 using EmbedIO.Routing;
 using EmbedIO.WebApi;
+using Swan.Logging;
 
 namespace enigma
 {
@@ -18,37 +19,92 @@ namespace enigma
             /// <param name="password">密码</param>
             /// <returns>是否成功</returns>
             [Route(HttpVerbs.Post, "/login")]
-            public bool Login([FormField] string username, [FormField] string password)
+            public ApiResult Login([FormField] string username, [FormField] string password)
             {
                 if (username == HttpServer.Instance.Options.AdminUser &&
                     password == HttpServer.Instance.Options.AdminPassword)
                 {
                     HttpContext.Session["Admin"] = true;
-                    return true;
+                    return ApiResult.Success;
                 }
 
-                return false;
+                return ApiResult.Fail;
             }
 
             /// <summary>
-            /// 获取时间标签列表
+            /// 添加时间标签
             /// </summary>
-            /// <returns>时间标签列表</returns>
-            [Route(HttpVerbs.Get, "/TimeMarks")]
-            public IEnumerable<TimeMark> GetTimeMarks()
+            /// <returns>是否成功</returns>
+            [Route(HttpVerbs.Post, "/TimeMark")]
+            public ApiResult AddTimeMark([JsonData] TimeMark timeMark)
             {
-                List<TimeMark> list = new List<TimeMark>();
                 // TODO
-                return list;
+                return ApiResult.Success;
             }
 
             /// <summary>
-            /// 检查是否登陆了
+            /// 删除时间标签
             /// </summary>
-            private bool IsLogin(IHttpContext httpContext)
+            /// <returns>是否成功</returns>
+            [Route(HttpVerbs.Delete, "/TimeMark")]
+            public ApiResult DelTimeMark([FormField] int id)
             {
-                return httpContext.Session.TryGetValue("Admin", out var value)
-                       && (bool)value;
+                // TODO
+                return ApiResult.Success;
+            }
+
+            /// <summary>
+            /// 更新时间标签
+            /// </summary>
+            /// <returns>是否成功</returns>
+            [Route(HttpVerbs.Put, "/TimeMark")]
+            public ApiResult UpdateTimeMark([JsonData] TimeMark timeMark)
+            {
+                // TODO
+                return ApiResult.Success;
+            }
+
+            /// <summary>
+            /// 更新数据库统计表
+            /// </summary>
+            /// <returns>是否成功</returns>
+            [Route(HttpVerbs.Put, "/count")]
+            public ApiResult UpdateTableCount([JsonData] TimeMark timeMark)
+            {
+                // TODO
+                return ApiResult.Success;
+            }
+
+            /// <summary>
+            /// 测试
+            /// </summary>
+            /// <returns>是否成功</returns>
+            [Route(HttpVerbs.Get, "/test")]
+            public ApiResult Test()
+            {
+                if (!CheckLogin(HttpContext))
+                {
+                    return ApiResult.Fail;
+                }
+                // TODO
+                return ApiResult.Success;
+            }
+
+            /// <summary>
+            /// 检查是否登陆了，未登录设置401无权限
+            /// </summary>
+            private bool CheckLogin(IHttpContext httpContext)
+            {
+                httpContext.Session.TryGetValue("Admin", out var value);
+                if (value != null && (bool) value)
+                {
+                    return true;
+                }
+                else
+                {
+                    httpContext.Response.StatusCode = 401;
+                    return false;
+                }
             }
         }
     }
