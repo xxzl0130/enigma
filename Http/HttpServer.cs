@@ -94,6 +94,7 @@ namespace enigma
                 {
                     Logger.RegisterLogger<ConsoleLogger>();
                 }
+
                 _server = new WebServer(cfg =>
                     {
                         cfg.WithMode(HttpListenerMode.EmbedIO);
@@ -110,14 +111,19 @@ namespace enigma
                     .WithIPBanning(o => o
                         .WithMaxRequestsPerSecond(5)
                         .WithRegexRules("HTTP exception 404"))
-                    .WithLocalSessionManager()
+                    .WithLocalSessionManager(m =>
+                    {
+                        m.SessionDuration = TimeSpan.FromDays(1);
+                        m.CookieDuration = TimeSpan.FromDays(14);
+                    })
+                    .WithWebApi("/api/admin", m => m.WithController<AdminController>())
                     .WithWebApi("/api", m => m.WithController<HttpController>());
                 if (!string.IsNullOrEmpty(Options.StaticFolderPath))
                 {
                     _server.WithStaticFolder(Options.StaticFolderRoute, Options.StaticFolderPath,
                         false, m => m.WithContentCaching(true));
                 }
-
+                
                 _server.RunAsync(_httpCts.Token);
             }
 

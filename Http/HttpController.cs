@@ -10,17 +10,7 @@ namespace enigma
     {
         internal sealed class HttpController : WebApiController
         {
-            [Route(HttpVerbs.Post, "/data")]
-            public bool Login([FormField] string username, [FormField] string password)
-            {
-                if (username == HttpServer.Instance.Options.AdminUser &&
-                    password == HttpServer.Instance.Options.AdminPassword)
-                {
-                    return true;
-                }
-
-                return false;
-            }
+            
         }
     }
 }
