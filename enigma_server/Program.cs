@@ -40,7 +40,7 @@ namespace enigma_server
                 DB.Instance.Log = Log;
                 DB.Instance.FilterCount = 1;
                 DB.Instance.Start();
-                HttpServer.Instance.Start(new HttpServer.HttpOptions(){Port = 8877,CorsHeaders = "*"});
+                HttpServer.Instance.Start(new HttpServer.HttpOptions(){Port = 8877});
             }
             catch (Exception e)
             {

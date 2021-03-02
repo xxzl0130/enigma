@@ -54,29 +54,9 @@ namespace enigma
                 /// </summary>
                 public string AdminPassword = "Admin";
                 /// <summary>
-                /// 静态文件路由
-                /// </summary>
-                public string StaticFolderRoute = "/";
-                /// <summary>
-                /// 静态文件的本地路径，为空时不提供文件访问
-                /// </summary>
-                public string StaticFolderPath = string.Empty;
-                /// <summary>
                 /// 是否启用Http自带的log
                 /// </summary>
                 public bool HttpLog = false;
-                /// <summary>
-                /// 跨域域名列表，逗号分隔，下同
-                /// </summary>
-                public string CorsOrigins = string.Empty;
-                /// <summary>
-                /// 跨域请求头列表
-                /// </summary>
-                public string CorsHeaders = string.Empty;
-                /// <summary>
-                /// 跨域方法列表
-                /// </summary>
-                public string CorsMethods = string.Empty;
             }
 
             /// <summary>
@@ -127,18 +107,12 @@ namespace enigma
                     {
                         m.SessionDuration = TimeSpan.FromDays(1);
                     })
+                    .WithCors()
                     .WithWebApi("/api/admin", m => m.WithController<AdminController>())
-                    .WithWebApi("/api", m => m.WithController<HttpController>());
-                if (!string.IsNullOrEmpty(Options.StaticFolderPath))
-                {
-                    _server.WithStaticFolder(Options.StaticFolderRoute, Options.StaticFolderPath,
-                        false, m => m.WithContentCaching(true));
-                }
-
-                if (!string.IsNullOrEmpty(Options.CorsOrigins))
-                {
-                    _server.WithCors(Options.CorsOrigins, Options.CorsHeaders, Options.CorsMethods);
-                }
+                    .WithWebApi("/api", m => m.WithController<HttpController>())
+                    .WithStaticFolder("/html", "./html", true, m => m.WithContentCaching(true))
+                    .WithStaticFolder("/static", "./static", true, m => m.WithContentCaching(true))
+                    .WithStaticFolder("/data", "./data", false, m => m.WithContentCaching(false));
 
                 _server.RunAsync(_httpCts.Token);
             }
