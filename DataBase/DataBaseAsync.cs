@@ -250,6 +250,32 @@ namespace enigma
             {
                 return Task.Factory.StartNew(() => { UpdateMissionFinishTotal(timeRange, timeID); });
             }
+
+            /// <summary>
+            /// 根据时间标签中的信息更新统计数据，不检查时间合法性
+            /// </summary>
+            /// <param name="timeMark">时间标签</param>
+            public Task UpdateTotalAsync(TimeMark timeMark)
+            {
+                return Task.Factory.StartNew(() => { UpdateTotal(timeMark); });
+            }
+
+            /// <summary>
+            /// 根据时间标签中的信息更新统计数据，不检查时间合法性
+            /// </summary>
+            /// <param name="timeMarks">时间标签列表</param>
+            public Task UpdateTotalAsync(IEnumerable<TimeMark> timeMarks)
+            {
+                return Task.Factory.StartNew(() => { UpdateTotal(timeMarks); });
+            }
+
+            /// <summary>
+            /// 自动更新所有时间标签下的数据
+            /// </summary>
+            public Task UpdateAllAsync()
+            {
+                return Task.Factory.StartNew(UpdateAll);
+            }
         }
     }
 }

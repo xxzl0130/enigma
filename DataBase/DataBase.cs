@@ -98,6 +98,14 @@ namespace enigma
                 {
                     _db.CreateTable(type);
                 }
+
+                updateTableDelegates["GunDevelopTotal"] = new UpdateTableDelegate(UpdateGunDevelopTotal);
+                updateTableDelegates["GunDevelopHeavyTotal"] = new UpdateTableDelegate(UpdateGunDevelopHeavyTotal);
+                updateTableDelegates["EquipDevelopTotal"] = new UpdateTableDelegate(UpdateEquipDevelopTotal);
+                updateTableDelegates["EquipProduceTotal"] = new UpdateTableDelegate(UpdateEquipProduceTotal);
+                updateTableDelegates["EquipDevelopHeavyTotal"] = new UpdateTableDelegate(UpdateEquipDevelopHeavyTotal);
+                updateTableDelegates["MissionBattleTotal"] = new UpdateTableDelegate(UpdateMissionBattleTotal);
+                updateTableDelegates["MissionFinishTotal"] = new UpdateTableDelegate(UpdateMissionFinishTotal);
             }
 
             public void Stop()

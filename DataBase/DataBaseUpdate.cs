@@ -338,6 +338,66 @@ namespace enigma
             }
 
             /// <summary>
+            /// 更新统计表的代理
+            /// </summary>
+            /// <param name="timeRanges">时间范围</param>
+            /// <param name="timeID">时间范围id</param>
+            private delegate void UpdateTableDelegate(IEnumerable<TimeRange> timeRanges, int timeID);
+            /// <summary>
+            /// 更新统计表的代理字典
+            /// </summary>
+            private Dictionary<string, UpdateTableDelegate> updateTableDelegates = new Dictionary<string, UpdateTableDelegate>();
+
+            /// <summary>
+            /// 根据时间标签中的信息更新统计数据，不检查时间合法性
+            /// </summary>
+            /// <param name="timeMark">时间标签</param>
+            public void UpdateTotal(TimeMark timeMark)
+            {
+                foreach (var type in timeMark.ContainTypes)
+                {
+                    if (updateTableDelegates.TryGetValue(type, out var updateDelegate))
+                    {
+                        updateDelegate(timeMark.TimeRanges, timeMark.ID);
+                    }
+                }
+            }
+
+            /// <summary>
+            /// 根据时间标签中的信息更新统计数据，不检查时间合法性
+            /// </summary>
+            /// <param name="timeMarks">时间标签列表</param>
+            public void UpdateTotal(IEnumerable<TimeMark> timeMarks)
+            {
+                foreach (var timeMark in timeMarks)
+                {
+                    UpdateTotal(timeMark);
+                }
+            }
+
+            /// <summary>
+            /// 自动更新所有时间标签下的数据
+            /// </summary>
+            public void UpdateAll()
+            {
+                var timeMarks = _db.Table<TimeMark>().ToList();
+                foreach (var timeMark in timeMarks)
+                {
+                    var utc = GetUTC();
+                    // 超过更新时限的不更新
+                    if (timeMark.UpdateLimitTime > 0 && utc > timeMark.UpdateLimitTime)
+                        continue;
+                    // 设为永不更新的不更新
+                    if (timeMark.UpdateInterval < 0)
+                        continue;
+                    // 没达到更新间隔的不更新
+                    if(utc - timeMark.LastUpdateTime < timeMark.UpdateInterval)
+                        continue;
+                    UpdateTotal(timeMark);
+                }
+            }
+
+            /// <summary>
             /// 根据输入创建公式语句的函数
             /// </summary>
             /// <typeparam name="T">记录/统计信息类型</typeparam>

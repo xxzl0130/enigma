@@ -85,11 +85,13 @@ namespace enigma
         /// </summary>
         [PrimaryKey, AutoIncrement]
         public int ID { get; set; }
+
         /// <summary>
         /// 表示时间范围的集合
         /// </summary>
         [Ignore]
         public List<TimeRange> TimeRanges { get; set; }
+
         /// <summary>
         /// TimeRanges的JSON字符串接口，供保存SQLite
         /// </summary>
@@ -99,22 +101,42 @@ namespace enigma
             get => JsonConvert.SerializeObject(TimeRanges);
             set => TimeRanges = JsonConvert.DeserializeObject<List<TimeRange>>(value);
         }
+
         /// <summary>
         /// 更新截止时间，过时不再更新，负数为永不过期
         /// </summary>
         public int UpdateLimitTime { get; set; }
+
         /// <summary>
         /// 更新间隔，负数为永不更新
         /// </summary>
         public int UpdateInterval { get; set; }
+
         /// <summary>
         /// 最后更新时间
         /// </summary>
         public int LastUpdateTime { get; set; }
+
         /// <summary>
         /// 名称
         /// </summary>
         public string Name { get; set; }
+
+        /// <summary>
+        /// 这个时间范围要包含的统计类型
+        /// </summary>
+        [Ignore]
+        public List<string> ContainTypes { get; set; }
+
+        /// <summary>
+        /// ContainTypes的JSON字符串接口，供保存SQLite
+        /// </summary>
+        [Column("ContainTypes")]
+        public string ContainTypesString
+        {
+            get => JsonConvert.SerializeObject(ContainTypes);
+            set => ContainTypes = JsonConvert.DeserializeObject<List<string>>(value);
+        }
 
         public TimeMark()
         {
@@ -128,7 +150,7 @@ namespace enigma
 
         public TimeMark(TimeRange timeRange, int id = 0)
         {
-            TimeRanges = new List<TimeRange>(){timeRange};
+            TimeRanges = new List<TimeRange>() {timeRange};
             ID = id;
             UpdateInterval = -1;
             LastUpdateTime = 0;

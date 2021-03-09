@@ -85,7 +85,7 @@ namespace enigma
                     return ApiResult.Fail;
                 try
                 {
-                    //await DB.Instance.update(timeMark);
+                    await DB.Instance.UpdateTotalAsync(timeMark);
                 }
                 catch (Exception e)
                 {
@@ -95,15 +95,22 @@ namespace enigma
             }
 
             /// <summary>
-            /// 测试
+            /// 更新所有数据库统计表
             /// </summary>
             /// <returns>是否成功</returns>
-            [Route(HttpVerbs.Get, "/test")]
-            public ApiResult Test()
+            [Route(HttpVerbs.Put, "/totalAll")]
+            public async Task<ApiResult> UpdateTableTotalAll()
             {
                 if (!CheckLogin(HttpContext))
                     return ApiResult.Fail;
-                // TODO
+                try
+                {
+                    await DB.Instance.UpdateAllAsync();
+                }
+                catch (Exception e)
+                {
+                    return new ApiResult(e);
+                }
                 return ApiResult.Success;
             }
 
