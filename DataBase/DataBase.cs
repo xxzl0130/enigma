@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -68,7 +69,8 @@ namespace enigma
                 typeof(MissionBattle),
                 typeof(MissionBattleTotal),
                 typeof(MissionFinish),
-                typeof(MissionFinishTotal)
+                typeof(MissionFinishTotal),
+                typeof(TimeMark)
             };
 
             /// <summary>
@@ -330,7 +332,6 @@ namespace enigma
 
                     Log?.Information("Import {n} {type} records.", count, it.Key);
                 }
-
                 _db.Commit();
             }
             
@@ -358,6 +359,67 @@ namespace enigma
                 data["Equip/develop"] = JsonConvert.SerializeObject(list);
 
                 return data;
+            }
+
+            /// <summary>
+            /// 导出所有统计数据
+            /// </summary>
+            public JObject DumpStatisticsData()
+            {
+                var data = new JObject();
+                var statisticsList = new List<Type>()
+                {
+                    typeof(GunDevelopTotal),
+                    typeof(GunDevelopHeavyTotal),
+                    typeof(EquipProduceTotal),
+                    typeof(EquipDevelopTotal),
+                    typeof(EquipDevelopHeavyTotal),
+                    typeof(MissionBattleTotal),
+                    typeof(MissionFinishTotal),
+                };
+                foreach (var type in statisticsList)
+                {
+                    var mapping = _db.GetMapping(type);
+                    var resultList = _db.Query(mapping, $"SELECT * FROM '{mapping.TableName}';");
+                    var obj = new JObject();
+                    // 这些统计类型都有time_id
+                    var property = type.GetProperty("time_id");
+                    foreach (var r in resultList)
+                    {
+                        var t = JsonConvert.SerializeObject(r);
+                        obj[property.GetValue(r)] = t;
+                    }
+
+                    data[nameof(type)] = obj;
+                }
+
+                return data;
+            }
+
+            /// <summary>
+            /// 导出所有时间标签
+            /// </summary>
+            public JObject DumpTimeMarks()
+            {
+                var data = new JObject();
+                var result = _db.Table<TimeMark>().ToList();
+                foreach (var timeMark in result)
+                {
+                    data[timeMark.ID] = JsonConvert.SerializeObject(timeMark);
+                }
+                return data;
+            }
+
+            /// <summary>
+            /// 插入一个时间标签，如果id已存在或者不为0则是更新
+            /// </summary>
+            /// <param name="timeMark"></param>
+            public void InsertTimeMark(TimeMark timeMark)
+            {
+                if (timeMark.ID == 0)
+                    _db.Insert(timeMark);
+                else
+                    _db.InsertOrReplace(timeMark);
             }
 
             /// <summary>

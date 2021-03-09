@@ -46,6 +46,31 @@ namespace enigma
             }
 
             /// <summary>
+            /// 导出所有统计数据
+            /// </summary>
+            public Task<JObject> DumpStatisticsDataAsync()
+            {
+                return Task<JObject>.Factory.StartNew(DumpStatisticsData);
+            }
+
+            /// <summary>
+            /// 导出所有时间标签
+            /// </summary>
+            public Task<JObject> DumpTimeMarksAsync()
+            {
+                return Task<JObject>.Factory.StartNew(DumpTimeMarks);
+            }
+
+            /// <summary>
+            /// 插入一个时间标签，如果id已存在或者不为0则是更新
+            /// </summary>
+            /// <param name="timeMark"></param>
+            public Task InsertTimeMarkAsync(TimeMark timeMark)
+            {
+                return Task.Factory.StartNew(() => InsertTimeMark(timeMark));
+            }
+
+            /// <summary>
             /// 查询一段时间内的数据，异步
             /// </summary>
             /// <typeparam name="T">类型</typeparam>

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Newtonsoft.Json;
+using SQLite;
 
 namespace enigma
 {
@@ -79,13 +81,24 @@ namespace enigma
     public class TimeMark
     {
         /// <summary>
-        /// 表示时间范围的集合
-        /// </summary>
-        public List<TimeRange> TimeRanges { get; set; }
-        /// <summary>
         /// 时间id
         /// </summary>
+        [PrimaryKey, AutoIncrement]
         public int ID { get; set; }
+        /// <summary>
+        /// 表示时间范围的集合
+        /// </summary>
+        [Ignore]
+        public List<TimeRange> TimeRanges { get; set; }
+        /// <summary>
+        /// TimeRanges的JSON字符串接口，供保存SQLite
+        /// </summary>
+        [Column("TimeRanges")]
+        public string TimeRangesString
+        {
+            get => JsonConvert.SerializeObject(TimeRanges);
+            set => TimeRanges = JsonConvert.DeserializeObject<List<TimeRange>>(value);
+        }
         /// <summary>
         /// 更新截止时间，过时不再更新，负数为永不过期
         /// </summary>
@@ -98,6 +111,10 @@ namespace enigma
         /// 最后更新时间
         /// </summary>
         public int LastUpdateTime { get; set; }
+        /// <summary>
+        /// 名称
+        /// </summary>
+        public string Name { get; set; }
 
         public TimeMark()
         {
@@ -106,6 +123,7 @@ namespace enigma
             LastUpdateTime = 0;
             UpdateLimitTime = -1;
             ID = 0;
+            Name = string.Empty;
         }
 
         public TimeMark(TimeRange timeRange, int id = 0)
@@ -115,6 +133,7 @@ namespace enigma
             UpdateInterval = -1;
             LastUpdateTime = 0;
             UpdateLimitTime = -1;
+            Name = string.Empty;
         }
     }
 }
