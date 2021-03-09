@@ -414,12 +414,21 @@ namespace enigma
             /// 插入一个时间标签，如果id已存在或者不为0则是更新
             /// </summary>
             /// <param name="timeMark"></param>
-            public void InsertTimeMark(TimeMark timeMark)
+            public void AddTimeMark(TimeMark timeMark)
             {
                 if (timeMark.ID == 0)
                     _db.Insert(timeMark);
                 else
                     _db.InsertOrReplace(timeMark);
+            }
+
+            /// <summary>
+            /// 根据id删除时间标签
+            /// </summary>
+            /// <param name="id">时间标签的id</param>
+            public void DelTimeMark(int id)
+            {
+                _db.Table<TimeMark>().Delete(mark => mark.ID == id);
             }
 
             /// <summary>

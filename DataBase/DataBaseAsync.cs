@@ -65,9 +65,18 @@ namespace enigma
             /// 插入一个时间标签，如果id已存在或者不为0则是更新
             /// </summary>
             /// <param name="timeMark"></param>
-            public Task InsertTimeMarkAsync(TimeMark timeMark)
+            public Task AddTimeMarkAsync(TimeMark timeMark)
             {
-                return Task.Factory.StartNew(() => InsertTimeMark(timeMark));
+                return Task.Factory.StartNew(() => AddTimeMark(timeMark));
+            }
+
+            /// <summary>
+            /// 根据id删除时间标签
+            /// </summary>
+            /// <param name="id">时间标签的id</param>
+            public Task DelTimeMarkAsync(int id)
+            {
+                return Task.Factory.StartNew(() => DelTimeMark(id));
             }
 
             /// <summary>

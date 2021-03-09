@@ -24,6 +24,19 @@ namespace enigma
             public static HttpServer Instance => _instance;
 
             /// <summary>
+            /// 数据文件存储路径
+            /// </summary>
+            public const string DataPath = "./data";
+            /// <summary>
+            /// HTML文件存储路径
+            /// </summary>
+            public const string HtmlPath = "./html";
+            /// <summary>
+            /// 静态文件存储路径
+            /// </summary>
+            public const string StaticPath = "./static";
+
+            /// <summary>
             /// EmbedIO服务器
             /// </summary>
             private WebServer _server = null;
@@ -107,12 +120,11 @@ namespace enigma
                     {
                         m.SessionDuration = TimeSpan.FromDays(1);
                     })
-                    .WithCors()
+                    //.WithCors()
                     .WithWebApi("/api/admin", m => m.WithController<AdminController>())
-                    .WithWebApi("/api", m => m.WithController<HttpController>())
-                    .WithStaticFolder("/html", "./html", true, m => m.WithContentCaching(true))
-                    .WithStaticFolder("/static", "./static", true, m => m.WithContentCaching(true))
-                    .WithStaticFolder("/data", "./data", false, m => m.WithContentCaching(false));
+                    .WithStaticFolder("/static", StaticPath, true, m => m.WithContentCaching(true))
+                    .WithStaticFolder("/data", DataPath, false, m => m.WithContentCaching(false))
+                    .WithStaticFolder("/", HtmlPath, true, m => m.WithContentCaching(true));
 
                 _server.RunAsync(_httpCts.Token);
             }

@@ -344,6 +344,7 @@ namespace enigma
             /// <param name="obj">数据</param>
             /// <returns>where后参数语句</returns>
             private delegate string MakeFormulaCmd<T>(T obj) where T : RecordBase, new();
+
             /// <summary>
             /// 更新统计信息的函数
             /// </summary>

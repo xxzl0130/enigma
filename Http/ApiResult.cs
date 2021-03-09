@@ -29,6 +29,20 @@ namespace enigma
             /// 失败的默认值
             /// </summary>
             public static ApiResult Fail = new ApiResult() {Ok = false};
+
+            public ApiResult()
+            {
+                Ok = true;
+                Message = string.Empty;
+                Data = null;
+            }
+
+            public ApiResult(Exception e)
+            {
+                Ok = false;
+                Message = e.ToString();
+                Data = null;
+            }
         }
     }
 }

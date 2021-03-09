@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Threading.Tasks;
 using EmbedIO;
 using EmbedIO.Routing;
 using EmbedIO.WebApi;
+using enigma.DataBase;
 using Swan.Logging;
 
 namespace enigma
@@ -32,13 +34,23 @@ namespace enigma
             }
 
             /// <summary>
-            /// 添加时间标签
+            /// 添加或更新时间标签
             /// </summary>
             /// <returns>是否成功</returns>
             [Route(HttpVerbs.Post, "/TimeMark")]
-            public ApiResult AddTimeMark([JsonData] TimeMark timeMark)
+            public async Task<ApiResult> AddTimeMark([JsonData] TimeMark timeMark)
             {
-                // TODO
+                if(!CheckLogin(HttpContext))
+                    return ApiResult.Fail;
+                try
+                {
+                    await DB.Instance.AddTimeMarkAsync(timeMark);
+                }
+                catch (Exception e)
+                {
+                    return new ApiResult(e);
+                }
+
                 return ApiResult.Success;
             }
 
@@ -47,20 +59,18 @@ namespace enigma
             /// </summary>
             /// <returns>是否成功</returns>
             [Route(HttpVerbs.Delete, "/TimeMark")]
-            public ApiResult DelTimeMark([FormField] int id)
+            public async Task<ApiResult> DelTimeMark([FormField] int id)
             {
-                // TODO
-                return ApiResult.Success;
-            }
-
-            /// <summary>
-            /// 更新时间标签
-            /// </summary>
-            /// <returns>是否成功</returns>
-            [Route(HttpVerbs.Put, "/TimeMark")]
-            public ApiResult UpdateTimeMark([JsonData] TimeMark timeMark)
-            {
-                // TODO
+                if (!CheckLogin(HttpContext))
+                    return ApiResult.Fail;
+                try
+                {
+                    await DB.Instance.DelTimeMarkAsync(id);
+                }
+                catch (Exception e)
+                {
+                    return new ApiResult(e);
+                }
                 return ApiResult.Success;
             }
 
@@ -68,10 +78,19 @@ namespace enigma
             /// 更新数据库统计表
             /// </summary>
             /// <returns>是否成功</returns>
-            [Route(HttpVerbs.Put, "/count")]
-            public ApiResult UpdateTableCount([JsonData] TimeMark timeMark)
+            [Route(HttpVerbs.Put, "/total")]
+            public async Task<ApiResult> UpdateTableTotal([JsonData] TimeMark timeMark)
             {
-                // TODO
+                if (!CheckLogin(HttpContext))
+                    return ApiResult.Fail;
+                try
+                {
+                    //await DB.Instance.update(timeMark);
+                }
+                catch (Exception e)
+                {
+                    return new ApiResult(e);
+                }
                 return ApiResult.Success;
             }
 
@@ -83,9 +102,7 @@ namespace enigma
             public ApiResult Test()
             {
                 if (!CheckLogin(HttpContext))
-                {
                     return ApiResult.Fail;
-                }
                 // TODO
                 return ApiResult.Success;
             }
