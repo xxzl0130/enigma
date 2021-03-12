@@ -23,18 +23,35 @@ namespace enigma
             /// </summary>
             public static HttpServer Instance => _instance;
 
+#if DEBUG
+            public const string PathPrefix = "../../../../HTML/";
             /// <summary>
             /// 数据文件存储路径
             /// </summary>
-            public const string DataPath = "./data";
+            public const string DataPath = PathPrefix + "Data";
             /// <summary>
             /// HTML文件存储路径
             /// </summary>
-            public const string HtmlPath = "./html";
+            public const string HtmlPath = PathPrefix + "HTML";
             /// <summary>
             /// 静态文件存储路径
             /// </summary>
-            public const string StaticPath = "./static";
+            public const string StaticPath = PathPrefix + "Static";
+#else
+
+            /// <summary>
+            /// 数据文件存储路径
+            /// </summary>
+            public const string DataPath = "./Data";
+            /// <summary>
+            /// HTML文件存储路径
+            /// </summary>
+            public const string HtmlPath = "./HTML";
+            /// <summary>
+            /// 静态文件存储路径
+            /// </summary>
+            public const string StaticPath = "./Static";
+#endif
 
             /// <summary>
             /// EmbedIO服务器
