@@ -1,0 +1,14 @@
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow-y: scroll;
+}
+
+nav::-webkit-scrollbar {
+    display: none;
+}
+
+.container {
+    -webkit-overflow-scrolling: touch;
+}
