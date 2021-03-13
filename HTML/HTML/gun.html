@@ -11,57 +11,40 @@
 
 <body>
     <div id="root">
-        <header id = "header" class="row">
-            <span class="logo col-sm-3 col-md">人形建造记录查询</span>
-            <a class="button col-sm col-md" href="https://github.com/xxzl0130/enigma" target="_blank">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    style="height: 20px; vertical-align: text-top;">
-                    <path
-                        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
-                    </path>
-                </svg>
-                <span>&nbsp;Github</span></a>
-            <a class="button col-sm col-md" href="#">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    style="height: 20px; vertical-align: text-top;">
-                    <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path>
-                    <polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon>
-                </svg>
-                <span>&nbsp;About</span></a>
-            <label for="doc-drawer-checkbox" class="button drawer-toggle col-sm"></label>
-        </header>
+        <header id="header" class="row"></header>
         <div class="row" id="below-header">
             <input id="doc-drawer-checkbox" class="drawer" value="on" type="checkbox">
             <nav class="col-sm-12 col-md-4 col-lg-3" id="nav-drawer">
-                <label for="doc-drawer-checkbox" class="button drawer-close"></label>
-                <a href="#">Category 1</a>
-                <span>Category 2</span>
-                <a href="#" class="sublink-1">Item 2.1</a>
-                <span class="sublink-1">Category 2.2</span>
-                <a href="#" class="sublink-2">Item 2.2.1</a>
-                <a href="#">Category 1</a>
-                <span>Category 2</span>
-                <a href="#" class="sublink-1">Item 2.1</a>
-                <span class="sublink-1">Category 2.2</span>
-                <a href="#" class="sublink-2">Item 2.2.1</a>
             </nav>
             <div class="main col-sm-12 col-md-8 col-lg-9" id="content">
-                <div id="text1" class="card fluid">
-                    <p>text1</p>
+                <div id="HG" class="card fluid">
+                    <h2 class="section double-padded">HG</h2>
                 </div>
-                <div id="text2" class="card fluid">
-                    <p>text2</p>
+                <div id="SMG" class="card fluid">
+                    <h2 class="section double-padded">SMG</h2>
+                </div>
+                <div id="RF" class="card fluid">
+                    <h2 class="section double-padded">RF</h2>
+                </div>
+                <div id="AR" class="card fluid">
+                    <h2 class="section double-padded">AR</h2>
+                </div>
+                <div id="MG" class="card fluid">
+                    <h2 class="section double-padded">MG</h2>
+                </div>
+                <div id="SG" class="card fluid">
+                    <h2 class="section double-padded">SG</h2>
                 </div>
             </div>
         </div>
     </div>
-    <footer style="text-align:center">
-        <p>©2021 xuanxuan.tech 
-            | <a href="https://github.com/xxzl0130/enigma">GitHub</a>
-        </p>
-    </footer>
 </body>
+
+<script type="text/javascript" src="./js/setup.js"></script>
+<script>
+    window.onload = function (){
+        setup("人形建造记录查询");
+    }
+</script>
 
 </html>
