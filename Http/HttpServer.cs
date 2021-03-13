@@ -131,7 +131,7 @@ namespace enigma
                         }
                     })
                     .WithIPBanning(o => o
-                        .WithMaxRequestsPerSecond(5)
+                        .WithMaxRequestsPerSecond(20)
                         .WithRegexRules("HTTP exception 404"))
                     .WithLocalSessionManager(m =>
                     {
@@ -140,7 +140,9 @@ namespace enigma
                     //.WithCors()
                     .WithWebApi("/api/admin", m => m.WithController<AdminController>())
                     .WithStaticFolder("/static", StaticPath, true, m => m.WithContentCaching(true))
-                    .WithStaticFolder("/data", DataPath, false, m => m.WithContentCaching(false))
+                    .WithStaticFolder("/data", DataPath, false, m => m.WithContentCaching(true))
+                    .WithStaticFolder("/js", HtmlPath + "/js", true, m => m.WithContentCaching(false))
+                    .WithStaticFolder("/css", HtmlPath + "/css", true, m => m.WithContentCaching(true))
                     .WithStaticFolder("/", HtmlPath, true, m => m.WithContentCaching(true));
 
                 _server.RunAsync(_httpCts.Token);

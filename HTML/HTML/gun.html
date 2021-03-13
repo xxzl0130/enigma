@@ -2,8 +2,8 @@
 <html lang="zh">
 
 <head>
-    <title>人形建造记录查询</title>
     <meta charset="utf-8">
+    <title>人形建造记录查询</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mini.css/3.0.1/mini-default.min.css" />
@@ -16,24 +16,11 @@
             <input id="doc-drawer-checkbox" class="drawer" value="on" type="checkbox">
             <nav class="col-sm-12 col-md-4 col-lg-3" id="nav-drawer">
             </nav>
-            <div class="main col-sm-12 col-md-8 col-lg-9" id="content">
-                <div id="HG" class="card fluid">
-                    <h2 class="section double-padded">HG</h2>
-                </div>
-                <div id="SMG" class="card fluid">
-                    <h2 class="section double-padded">SMG</h2>
-                </div>
-                <div id="RF" class="card fluid">
-                    <h2 class="section double-padded">RF</h2>
-                </div>
-                <div id="AR" class="card fluid">
-                    <h2 class="section double-padded">AR</h2>
-                </div>
-                <div id="MG" class="card fluid">
-                    <h2 class="section double-padded">MG</h2>
-                </div>
-                <div id="SG" class="card fluid">
-                    <h2 class="section double-padded">SG</h2>
+            <div class="main col-sm-12 col-md-8 col-lg-9" id="content"></div>
+            <div class="main col-sm-12 col-md-8 col-lg-9" id="details" style="display:none">
+                <div class="section">
+                    <button type="button" class="large" id="return"
+                        onclick="retrurnContent();">返回</button>
                 </div>
             </div>
         </div>
@@ -41,9 +28,11 @@
 </body>
 
 <script type="text/javascript" src="./js/setup.js"></script>
+<script type="text/javascript" src="./js/gun.js"></script>
 <script>
     window.onload = function (){
         setup("人形建造记录查询");
+        setupGun();
     }
 </script>
 

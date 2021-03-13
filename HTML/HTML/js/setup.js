@@ -1,10 +1,10 @@
-var GunLink = "./gun.html";
-var EquipLink = "./equip.html";
-var MissionLink = "./mission.html";
+var GunLink = "/gun.html";
+var EquipLink = "/equip.html";
+var MissionLink = "/mission.html";
 var navList = [
     {
         title: "人形建造记录",
-        link: "./gun.html",
+        link: "/gun.html",
         sub: [
             {
                 title: "HG",
@@ -34,7 +34,7 @@ var navList = [
     },
     {
         title: "装备建造记录",
-        link: "./equip.html",
+        link: "/equip.html",
         sub: [
             {
                 title: "配件",
@@ -60,7 +60,7 @@ var navList = [
     },
     {
         title: "装备定向记录",
-        link: "./equipProduce.html",
+        link: "/equipProduce.html",
         sub: [
             {
                 title: "配件",
@@ -78,7 +78,7 @@ var navList = [
     },
     {
         title: "战役打捞记录",
-        link: "./mission.html",
+        link: "/mission.html",
         sub: null // TODO: 添加战役列表
     }
 ];
@@ -96,7 +96,7 @@ function setup(name) {
                     </path>
                 </svg>
                 <span>&nbsp;Github</span></a>
-            <a class="button col-sm col-md" href="./about.html">
+            <a class="button col-sm col-md" href="/about.html">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                     style="height: 20px; vertical-align: text-top;">
@@ -127,8 +127,7 @@ function setup(name) {
     // 添加footer
     var footer = document.createElement("footer");
     footer.setAttribute("style", "text-align:center");
-    footer.innerHTML = `<p>©2021 xuanxuan.tech
-            | <a href="https://github.com/xxzl0130/enigma">GitHub</a>
+    footer.innerHTML = `<p>©2021 xuanxuan.tech | <a href="https://github.com/xxzl0130/enigma">GitHub</a> | <a href="/admin.html">Admin</a>
         </p>`;
     document.body.append(footer);
 }

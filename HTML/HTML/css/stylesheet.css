@@ -12,3 +12,7 @@ nav::-webkit-scrollbar {
 .container {
     -webkit-overflow-scrolling: touch;
 }
+
+.main{
+    background-color: #eee;
+}

@@ -11,10 +11,23 @@ GIRLS' FRONTLINE Statistical Tool
 项目预计以以下几个模块组成：  
 ### proxy
 [http代理模块](./proxy)，负责完成对游戏数据的代理分析，提取所需数据，以event回调传出数据。  
-代理中需要处理多用户登录以及维护每个用户的妖精配置信息。  
-目前该模块已完成70%。  
+代理中需要处理多用户登录以及维护每个用户的妖精配置信息。    
 ### database
 数据库模块，将游戏操作数据进行存储、分析，同时支持导出、导入、合并、删除数据，支持设置特殊活动时间段。  
-预计以SQLite实现，分为建造数据库、打捞数据库，建造库以建造类型分表，打捞库以战役分表，并设置统计总表，定时更新。  
+以SQLite实现，以建造类型、战役分表，并设置统计总表，定时更新。  
 ### web（main）
 网页模块，通过网页展示统计数据，设置特殊时间段等。  
+
+## 记录
+### gun_info
+type:  
+1. HG
+2. SMG
+3. RF
+4. AR
+5. MG
+6. SG
+
+### table
+`/sdcard/Android/data/com.sunborn.girlsfrontline.cn/files/Android/New/asset_texttable.ab`  
+用AssetStudio拆
