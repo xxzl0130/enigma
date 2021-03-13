@@ -16,3 +16,39 @@ nav::-webkit-scrollbar {
 .main{
     background-color: #eee;
 }
+
+.btn{
+    border-radius: 6px;
+}
+
+.gun-5-star{
+    color: #fff;
+    background-color: #ffb400;
+}
+.gun-5-star:hover{
+    background-color: #e0a005;
+}
+
+.gun-4-star{
+    color: #fff;
+    background-color: #d2e05c;
+}
+.gun-4-star:hover{
+    background-color: #c1ce59;
+}
+
+.gun-3-star{
+    color: #fff;
+    background-color: #6fddcb;
+}
+.gun-3-star:hover{
+    background-color: #6dccbc;
+}
+
+.gun-2-star{
+    color: #fff;
+    background-color: #bedec7;
+}
+.gun-2-star:hover{
+    background-color: #acc5b3;
+}

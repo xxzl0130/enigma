@@ -28,7 +28,7 @@ function onGunInfoLoad() {
     for (var i = 5; i > 1; --i) {
         ranks[i].forEach(gun => {
             var type = types[gun.type];
-            var html = `<button type="button" class="large gun-${gun.rank}-star" id="${gun.en_name}" onclick="selectGun(${gun.id});">${gun.en_name}</button>`;
+            var html = `<button type="button" class="btn gun-${gun.rank}-star" id="${gun.en_name}" onclick="selectGun(${gun.id});">${gun.en_name}</button>`;
             document.getElementById(type + "-buttons").innerHTML += html;
         });
     }

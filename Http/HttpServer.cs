@@ -138,12 +138,21 @@ namespace enigma
                         m.SessionDuration = TimeSpan.FromDays(1);
                     })
                     //.WithCors()
+#if DEBUG
+                    .WithWebApi("/api/admin", m => m.WithController<AdminController>())
+                    .WithStaticFolder("/static", StaticPath, false, m => m.WithContentCaching(false))
+                    .WithStaticFolder("/data", DataPath, false, m => m.WithContentCaching(false))
+                    .WithStaticFolder("/js", HtmlPath + "/js", false, m => m.WithContentCaching(false))
+                    .WithStaticFolder("/css", HtmlPath + "/css", false, m => m.WithContentCaching(false))
+                    .WithStaticFolder("/", HtmlPath, false, m => m.WithContentCaching(false));
+#else
                     .WithWebApi("/api/admin", m => m.WithController<AdminController>())
                     .WithStaticFolder("/static", StaticPath, true, m => m.WithContentCaching(true))
                     .WithStaticFolder("/data", DataPath, false, m => m.WithContentCaching(true))
                     .WithStaticFolder("/js", HtmlPath + "/js", true, m => m.WithContentCaching(false))
                     .WithStaticFolder("/css", HtmlPath + "/css", true, m => m.WithContentCaching(true))
                     .WithStaticFolder("/", HtmlPath, true, m => m.WithContentCaching(true));
+#endif
 
                 _server.RunAsync(_httpCts.Token);
             }
