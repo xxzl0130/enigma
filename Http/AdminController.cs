@@ -8,127 +8,127 @@ using EmbedIO.WebApi;
 using enigma.DataBase;
 using Swan.Logging;
 
-namespace enigma
+namespace enigma.Http
 {
-    namespace Http
+    public sealed class AdminController : WebApiController
     {
-        public sealed class AdminController : WebApiController
+        /// <summary>
+        /// 登陆管理员账号
+        /// </summary>
+        /// <param name="username">用户名</param>
+        /// <param name="password">密码</param>
+        /// <returns>是否成功</returns>
+        [Route(HttpVerbs.Post, "/login")]
+        public ApiResult Login([FormField] string username, [FormField] string password)
         {
-            /// <summary>
-            /// 登陆管理员账号
-            /// </summary>
-            /// <param name="username">用户名</param>
-            /// <param name="password">密码</param>
-            /// <returns>是否成功</returns>
-            [Route(HttpVerbs.Post, "/login")]
-            public ApiResult Login([FormField] string username, [FormField] string password)
+            if (username == HttpServer.Instance.Options.AdminUser &&
+                password == HttpServer.Instance.Options.AdminPassword)
             {
-                if (username == HttpServer.Instance.Options.AdminUser &&
-                    password == HttpServer.Instance.Options.AdminPassword)
-                {
-                    HttpContext.Session["Admin"] = true;
-                    return ApiResult.Success;
-                }
+                HttpContext.Session["Admin"] = true;
+                return ApiResult.Success;
+            }
 
+            return ApiResult.Fail;
+        }
+
+        /// <summary>
+        /// 添加或更新时间标签
+        /// </summary>
+        /// <returns>是否成功</returns>
+        [Route(HttpVerbs.Post, "/TimeMark")]
+        public async Task<ApiResult> AddTimeMark([JsonData] TimeMark timeMark)
+        {
+            if (!CheckLogin(HttpContext))
                 return ApiResult.Fail;
+            try
+            {
+                await DB.Instance.AddTimeMarkAsync(timeMark);
+            }
+            catch (Exception e)
+            {
+                return new ApiResult(e);
             }
 
-            /// <summary>
-            /// 添加或更新时间标签
-            /// </summary>
-            /// <returns>是否成功</returns>
-            [Route(HttpVerbs.Post, "/TimeMark")]
-            public async Task<ApiResult> AddTimeMark([JsonData] TimeMark timeMark)
-            {
-                if(!CheckLogin(HttpContext))
-                    return ApiResult.Fail;
-                try
-                {
-                    await DB.Instance.AddTimeMarkAsync(timeMark);
-                }
-                catch (Exception e)
-                {
-                    return new ApiResult(e);
-                }
+            return ApiResult.Success;
+        }
 
-                return ApiResult.Success;
+        /// <summary>
+        /// 删除时间标签
+        /// </summary>
+        /// <returns>是否成功</returns>
+        [Route(HttpVerbs.Delete, "/TimeMark")]
+        public async Task<ApiResult> DelTimeMark([FormField] int id)
+        {
+            if (!CheckLogin(HttpContext))
+                return ApiResult.Fail;
+            try
+            {
+                await DB.Instance.DelTimeMarkAsync(id);
+            }
+            catch (Exception e)
+            {
+                return new ApiResult(e);
             }
 
-            /// <summary>
-            /// 删除时间标签
-            /// </summary>
-            /// <returns>是否成功</returns>
-            [Route(HttpVerbs.Delete, "/TimeMark")]
-            public async Task<ApiResult> DelTimeMark([FormField] int id)
+            return ApiResult.Success;
+        }
+
+        /// <summary>
+        /// 更新数据库统计表
+        /// </summary>
+        /// <returns>是否成功</returns>
+        [Route(HttpVerbs.Put, "/total")]
+        public async Task<ApiResult> UpdateTableTotal([JsonData] TimeMark timeMark)
+        {
+            if (!CheckLogin(HttpContext))
+                return ApiResult.Fail;
+            try
             {
-                if (!CheckLogin(HttpContext))
-                    return ApiResult.Fail;
-                try
-                {
-                    await DB.Instance.DelTimeMarkAsync(id);
-                }
-                catch (Exception e)
-                {
-                    return new ApiResult(e);
-                }
-                return ApiResult.Success;
+                await DB.Instance.UpdateTotalAsync(timeMark);
+            }
+            catch (Exception e)
+            {
+                return new ApiResult(e);
             }
 
-            /// <summary>
-            /// 更新数据库统计表
-            /// </summary>
-            /// <returns>是否成功</returns>
-            [Route(HttpVerbs.Put, "/total")]
-            public async Task<ApiResult> UpdateTableTotal([JsonData] TimeMark timeMark)
+            return ApiResult.Success;
+        }
+
+        /// <summary>
+        /// 更新所有数据库统计表
+        /// </summary>
+        /// <returns>是否成功</returns>
+        [Route(HttpVerbs.Put, "/totalAll")]
+        public async Task<ApiResult> UpdateTableTotalAll()
+        {
+            if (!CheckLogin(HttpContext))
+                return ApiResult.Fail;
+            try
             {
-                if (!CheckLogin(HttpContext))
-                    return ApiResult.Fail;
-                try
-                {
-                    await DB.Instance.UpdateTotalAsync(timeMark);
-                }
-                catch (Exception e)
-                {
-                    return new ApiResult(e);
-                }
-                return ApiResult.Success;
+                await DB.Instance.UpdateAllAsync();
+            }
+            catch (Exception e)
+            {
+                return new ApiResult(e);
             }
 
-            /// <summary>
-            /// 更新所有数据库统计表
-            /// </summary>
-            /// <returns>是否成功</returns>
-            [Route(HttpVerbs.Put, "/totalAll")]
-            public async Task<ApiResult> UpdateTableTotalAll()
-            {
-                if (!CheckLogin(HttpContext))
-                    return ApiResult.Fail;
-                try
-                {
-                    await DB.Instance.UpdateAllAsync();
-                }
-                catch (Exception e)
-                {
-                    return new ApiResult(e);
-                }
-                return ApiResult.Success;
-            }
+            return ApiResult.Success;
+        }
 
-            /// <summary>
-            /// 检查是否登陆了，未登录设置401无权限
-            /// </summary>
-            private bool CheckLogin(IHttpContext httpContext)
+        /// <summary>
+        /// 检查是否登陆了，未登录设置401无权限
+        /// </summary>
+        private bool CheckLogin(IHttpContext httpContext)
+        {
+            httpContext.Session.TryGetValue("Admin", out var value);
+            if (value != null && (bool) value)
             {
-                httpContext.Session.TryGetValue("Admin", out var value);
-                if (value != null && (bool) value)
-                {
-                    return true;
-                }
-                else
-                {
-                    httpContext.Response.StatusCode = 401;
-                    return false;
-                }
+                return true;
+            }
+            else
+            {
+                httpContext.Response.StatusCode = 401;
+                return false;
             }
         }
     }

@@ -15,6 +15,7 @@ namespace enigma
         /// 在范围内
         /// </summary>
         In,
+
         /// <summary>
         /// 不在范围内
         /// </summary>
@@ -30,10 +31,12 @@ namespace enigma
         /// 类型
         /// </summary>
         public RangeType Type { get; set; }
+
         /// <summary>
         /// 起始时间UTC时间戳
         /// </summary>
         public int Start { get; set; }
+
         /// <summary>
         /// 结束时间UTC时间戳
         /// </summary>
@@ -69,7 +72,7 @@ namespace enigma
                 sb.Append(time.ToSQL(colName))
                     .Append(" AND ");
             }
-            
+
             // 排除最后一个and
             return sb.ToString(0, sb.Length - 5);
         }
