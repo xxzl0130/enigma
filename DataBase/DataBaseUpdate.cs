@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
@@ -345,8 +346,8 @@ namespace enigma.DataBase
         /// <summary>
         /// 更新统计表的代理字典
         /// </summary>
-        private Dictionary<string, UpdateTableDelegate> updateTableDelegates =
-            new Dictionary<string, UpdateTableDelegate>();
+        private Dictionary<DataBaseType, UpdateTableDelegate> updateTableDelegates =
+            new Dictionary<DataBaseType, UpdateTableDelegate>();
 
         /// <summary>
         /// 根据时间标签中的信息更新统计数据，不检查时间合法性
@@ -354,12 +355,9 @@ namespace enigma.DataBase
         /// <param name="timeMark">时间标签</param>
         public void UpdateTotal(TimeMark timeMark)
         {
-            foreach (var type in timeMark.ContainTypes)
+            foreach (var it in updateTableDelegates.Where(it => timeMark.Types.HasFlag(it.Key)))
             {
-                if (updateTableDelegates.TryGetValue(type, out var updateDelegate))
-                {
-                    updateDelegate(timeMark.TimeRanges, timeMark.ID);
-                }
+                it.Value(timeMark.TimeRanges, timeMark.ID);
             }
         }
 

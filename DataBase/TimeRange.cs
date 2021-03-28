@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using enigma.DataBase;
 using Newtonsoft.Json;
 using SQLite;
 
@@ -124,22 +125,12 @@ namespace enigma
         /// 名称
         /// </summary>
         public string Name { get; set; }
-
+        
         /// <summary>
         /// 这个时间范围要包含的统计类型
         /// </summary>
-        [Ignore]
-        public List<string> ContainTypes { get; set; }
-
-        /// <summary>
-        /// ContainTypes的JSON字符串接口，供保存SQLite
-        /// </summary>
-        [Column("ContainTypes")]
-        public string ContainTypesString
-        {
-            get => JsonConvert.SerializeObject(ContainTypes);
-            set => ContainTypes = JsonConvert.DeserializeObject<List<string>>(value);
-        }
+        [Column("ContainTypes")] 
+        public DataBaseType Types { get; set; }
 
         public TimeMark()
         {

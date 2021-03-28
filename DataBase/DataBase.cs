@@ -97,13 +97,13 @@ namespace enigma.DataBase
                 _db.CreateTable(type);
             }
 
-            updateTableDelegates["GunDevelopTotal"] = new UpdateTableDelegate(UpdateGunDevelopTotal);
-            updateTableDelegates["GunDevelopHeavyTotal"] = new UpdateTableDelegate(UpdateGunDevelopHeavyTotal);
-            updateTableDelegates["EquipDevelopTotal"] = new UpdateTableDelegate(UpdateEquipDevelopTotal);
-            updateTableDelegates["EquipProduceTotal"] = new UpdateTableDelegate(UpdateEquipProduceTotal);
-            updateTableDelegates["EquipDevelopHeavyTotal"] = new UpdateTableDelegate(UpdateEquipDevelopHeavyTotal);
-            updateTableDelegates["MissionBattleTotal"] = new UpdateTableDelegate(UpdateMissionBattleTotal);
-            updateTableDelegates["MissionFinishTotal"] = new UpdateTableDelegate(UpdateMissionFinishTotal);
+            updateTableDelegates[DataBaseType.GunDevelop] = new UpdateTableDelegate(UpdateGunDevelopTotal);
+            updateTableDelegates[DataBaseType.GunDevelopHeavy] = new UpdateTableDelegate(UpdateGunDevelopHeavyTotal);
+            updateTableDelegates[DataBaseType.EquipDevelop] = new UpdateTableDelegate(UpdateEquipDevelopTotal);
+            updateTableDelegates[DataBaseType.EquipProduce] = new UpdateTableDelegate(UpdateEquipProduceTotal);
+            updateTableDelegates[DataBaseType.EquipDevelopHeavy] = new UpdateTableDelegate(UpdateEquipDevelopHeavyTotal);
+            updateTableDelegates[DataBaseType.MissionBattle] = new UpdateTableDelegate(UpdateMissionBattleTotal);
+            updateTableDelegates[DataBaseType.MissionFinish] = new UpdateTableDelegate(UpdateMissionFinishTotal);
         }
 
         public void Stop()

@@ -5,6 +5,21 @@ using SQLite;
 
 namespace enigma.DataBase
 {
+    /// <summary>
+    /// 数据库中统计的类型，以bit flag保存方便时间段标记
+    /// </summary>
+    [Flags]
+    public enum DataBaseType
+    {
+        GunDevelop = 1 << 1,
+        GunDevelopHeavy = 1 << 2,
+        EquipProduce = 1 << 3,
+        EquipDevelop = 1 << 4,
+        EquipDevelopHeavy = 1 << 5,
+        MissionBattle = 1 << 6,
+        MissionFinish = 1 << 7,
+    }
+
     // SQLite里的列必须是属性
     /// <summary>
     /// 数据库记录的基础定义
