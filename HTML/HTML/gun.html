@@ -21,8 +21,17 @@
                 <div class="section">
                     <button type="button" class="large primary btn" id="return"
                         onclick="retrurnContent();">返回</button>
-                    <div class="card large">
-                        <h2>信息</h2>
+                    <div class="row">
+                        <div class="card large" id="gunInfoCard">
+                        </div>
+                        <div class="card large" id="settingsCard">
+                            <h2>配置</h2>
+                            <div class="row">
+                            <input type="radio" name="selDisp" autocomplete="off" id="normalInfo" value=1>普通建造
+                            <input type="radio" name="selDisp" autocomplete="off" id="heavyInfo" value=2>重型建造
+                            <input type="radio" name="selDisp" autocomplete="off" id="allInfo" value=3 checked>显示全部
+                            </div>
+                        </div>
                     </div>
                     <table id="detailTable" class="striped">
                         <thead>
@@ -47,6 +56,7 @@
     </div>
 </body>
 
+<script type="text/javascript" src="./js/utils.js"></script>
 <script type="text/javascript" src="./js/setup.js"></script>
 <script type="text/javascript" src="./js/gun.js"></script>
 <script>

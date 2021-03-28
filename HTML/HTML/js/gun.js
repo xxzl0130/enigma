@@ -37,7 +37,12 @@ function onGunInfoLoad() {
 }
 
 function selectGun(id) {
-    console.log(id);
+    var gun = gunInfo[id];
+    var html = `<h2>${gun.en_name}</h2>
+    <p>建造时间：${seconds2Str(gun.develop_duration)}<br>
+    星级：${gun.rank}</p>`;
+    document.getElementById("gunInfoCard").innerHTML = html;
+
     document.getElementById("content").style.display = "none";
     document.getElementById("details").style.display = "";
 }
