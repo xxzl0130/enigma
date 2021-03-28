@@ -83,6 +83,8 @@ var navList = [
     }
 ];
 
+var host = "http://" + this.location.host;
+
 function setup(name) {
     // 添加header
     var html = `

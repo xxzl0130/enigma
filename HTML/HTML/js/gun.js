@@ -1,4 +1,12 @@
+// 枪支类型
 var types = ["", "HG", "SMG", "RF", "AR", "MG", "SG"];
+// 枪信息列表
+var gunInfo = null;
+// 当前选择的枪
+var curGun = null;
+// 显示类型，1-普通，2-重型，3-全部
+var dispType = 3;
+
 function setupGun() {
     types.forEach(t => {
         if (t.length == 0)
@@ -10,12 +18,10 @@ function setupGun() {
         document.getElementById('content').innerHTML += html;
     });
     var xhr = new XMLHttpRequest();
-    xhr.open("GET", "http://" + this.location.host + "/static/gun_info.json");
+    xhr.open("GET", host + "/static/gun_info.json");
     xhr.onload = onGunInfoLoad;
     xhr.send();
 }
-
-var gunInfo = null;
 
 function onGunInfoLoad() {
     gunInfo = JSON.parse(this.responseText);
@@ -37,10 +43,10 @@ function onGunInfoLoad() {
 }
 
 function selectGun(id) {
-    var gun = gunInfo[id];
-    var html = `<h2>${gun.en_name}</h2>
-    <p>建造时间：${seconds2Str(gun.develop_duration)}<br>
-    星级：${gun.rank}</p>`;
+    curGun = gunInfo[id];
+    var html = `<h2>${curGun.en_name}</h2>
+    <p>建造时间：${seconds2Str(curGun.develop_duration)}<br>
+    星级：${curGun.rank}</p>`;
     document.getElementById("gunInfoCard").innerHTML = html;
 
     document.getElementById("content").style.display = "none";
@@ -54,4 +60,12 @@ function retrurnContent() {
 
 function sortDetailTable(key){
     console.log(key);
+}
+
+function selectTime(){
+
+}
+
+function selectDispType(key){
+
 }

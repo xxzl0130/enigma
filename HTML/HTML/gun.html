@@ -19,37 +19,44 @@
             <div class="main col-sm-12 col-md-9 col-lg-10" id="content"></div>
             <div class="main col-sm-12 col-md-9 col-lg-10" id="details" style="display:none">
                 <div class="section">
-                    <button type="button" class="large primary btn" id="return"
-                        onclick="retrurnContent();">返回</button>
+                    <button type="button" class="large primary btn" id="return" onclick="retrurnContent();">返回</button>
                     <div class="row">
-                        <div class="card large" id="gunInfoCard">
-                        </div>
-                        <div class="card large" id="settingsCard">
-                            <h2>配置</h2>
+                        <div>
+                            <div id="gunInfoCard">
+                            </div>
                             <div class="row">
-                            <input type="radio" name="selDisp" autocomplete="off" id="normalInfo" value=1>普通建造
-                            <input type="radio" name="selDisp" autocomplete="off" id="heavyInfo" value=2>重型建造
-                            <input type="radio" name="selDisp" autocomplete="off" id="allInfo" value=3 checked>显示全部
+                                <input type="radio" name="selDisp" autocomplete="off" id="normalInfo" onchange="selectDispType(1);">普通建造
+                                <input type="radio" name="selDisp" autocomplete="off" id="heavyInfo" onchange="selectDispType(2);">重型建造
+                                <input type="radio" name="selDisp" autocomplete="off" id="allInfo" onchange="selectDispType(3);" checked>显示全部
+                            </div>
+                            <label for="selectTimeControl" class="small primary button">选择时段</label>
+                            <input type="checkbox" id="selectTimeControl" class="modal">
+                            <div>
+                                <div class="card">
+                                    <label for="selectTimeControl" class="modal-close"></label>
+                                    <h3 class="section">时间段列表</h3>
+                                    <div id="selectTimeContent"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <table id="detailTable" class="striped">
                         <thead>
-                          <tr>
-                            <th>序号</th>
-                            <th onclick="sortDetailTable('mp');">人力</th>
-                            <th onclick="sortDetailTable('ammo');">弹药</th>
-                            <th onclick="sortDetailTable('mre');">口粮</th>
-                            <th onclick="sortDetailTable('part');">零件</th>
-                            <th onclick="sortDetailTable('input_level');">档位</th>
-                            <th onclick="sortDetailTable('valid_total');">出货数</th>
-                            <th onclick="sortDetailTable('total');">总数</th>
-                            <th onclick="sortDetailTable('valid_rate');">出货率</th>
-                          </tr>
+                            <tr>
+                                <th>序号</th>
+                                <th onclick="sortDetailTable('mp');">人力</th>
+                                <th onclick="sortDetailTable('ammo');">弹药</th>
+                                <th onclick="sortDetailTable('mre');">口粮</th>
+                                <th onclick="sortDetailTable('part');">零件</th>
+                                <th onclick="sortDetailTable('input_level');">档位</th>
+                                <th onclick="sortDetailTable('valid_total');">出货数</th>
+                                <th onclick="sortDetailTable('total');">总数</th>
+                                <th onclick="sortDetailTable('valid_rate');">出货率</th>
+                            </tr>
                         </thead>
                         <tbody>
                         </tbody>
-                      </table>
+                    </table>
                 </div>
             </div>
         </div>
@@ -60,7 +67,7 @@
 <script type="text/javascript" src="./js/setup.js"></script>
 <script type="text/javascript" src="./js/gun.js"></script>
 <script>
-    window.onload = function (){
+    window.onload = function () {
         setup("人形建造记录查询");
         setupGun();
     }
