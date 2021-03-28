@@ -479,7 +479,7 @@ namespace enigma.DataBase
         /// <returns>UTC时间戳</returns>
         private static int GetUTC()
         {
-            return (int) (DateTime.Now - new DateTime(1970, 1, 1)).TotalSeconds;
+            return (int) (DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
         }
 
         /// <summary>
