@@ -14,13 +14,33 @@
         <header id="header" class="row"></header>
         <div class="row" id="below-header">
             <input id="doc-drawer-checkbox" class="drawer" value="on" type="checkbox">
-            <nav class="col-sm-12 col-md-4 col-lg-3" id="nav-drawer">
+            <nav class="col-sm-12 col-md-3 col-lg-2" id="nav-drawer">
             </nav>
-            <div class="main col-sm-12 col-md-8 col-lg-9" id="content"></div>
-            <div class="main col-sm-12 col-md-8 col-lg-9" id="details" style="display:none">
+            <div class="main col-sm-12 col-md-9 col-lg-10" id="content"></div>
+            <div class="main col-sm-12 col-md-9 col-lg-10" id="details" style="display:none">
                 <div class="section">
                     <button type="button" class="large primary btn" id="return"
                         onclick="retrurnContent();">返回</button>
+                    <div class="card large">
+                        <h2>信息</h2>
+                    </div>
+                    <table id="detailTable" class="striped">
+                        <thead>
+                          <tr>
+                            <th>序号</th>
+                            <th onclick="sortDetailTable('mp');">人力</th>
+                            <th onclick="sortDetailTable('ammo');">弹药</th>
+                            <th onclick="sortDetailTable('mre');">口粮</th>
+                            <th onclick="sortDetailTable('part');">零件</th>
+                            <th onclick="sortDetailTable('input_level');">档位</th>
+                            <th onclick="sortDetailTable('valid_total');">出货数</th>
+                            <th onclick="sortDetailTable('total');">总数</th>
+                            <th onclick="sortDetailTable('valid_rate');">出货率</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                      </table>
                 </div>
             </div>
         </div>

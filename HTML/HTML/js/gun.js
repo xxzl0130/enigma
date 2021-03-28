@@ -15,8 +15,10 @@ function setupGun() {
     xhr.send();
 }
 
+var gunInfo = null;
+
 function onGunInfoLoad() {
-    var gunInfo = JSON.parse(this.responseText);
+    gunInfo = JSON.parse(this.responseText);
     var ranks = [];
     for (var i = 0; i <= 5; ++i)
         ranks.push([]);
@@ -43,4 +45,8 @@ function selectGun(id) {
 function retrurnContent() {
     document.getElementById("content").style.display = "";
     document.getElementById("details").style.display = "none";
+}
+
+function sortDetailTable(key){
+    console.log(key);
 }
