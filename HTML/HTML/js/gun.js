@@ -6,6 +6,8 @@ var gunInfo = null;
 var curGun = null;
 // 显示类型，1-普通，2-重型，3-全部
 var dispType = 3;
+// 名称table
+var table = null;
 
 function setupGun() {
     types.forEach(t => {
@@ -36,15 +38,29 @@ function onGunInfoLoad() {
     for (var i = 5; i > 1; --i) {
         ranks[i].forEach(gun => {
             var type = types[gun.type];
-            var html = `<button type="button" class="btn gun-${gun.rank}-star" id="${gun.en_name}" onclick="selectGun(${gun.id});">${gun.en_name}</button>`;
+            var html = `<button type="button" class="btn gun-${gun.rank}-star" id="${gun.name}" onclick="selectGun(${gun.id});">${gun.en_name}</button>`;
             document.getElementById(type + "-buttons").innerHTML += html;
         });
+    }
+    var tableXhr = new XMLHttpRequest();
+    tableXhr.open("GET", host + "/static/table.json");
+    tableXhr.onload = onTableLoad;
+    tableXhr.send();
+}
+
+function onTableLoad() {
+    table = JSON.parse(this.responseText);
+    for (var i = 0; i < 1000; ++i){
+        var id = `gun-${10000000 + i}`;
+        if (table[id] != null) {
+            document.getElementById(id).innerHTML = table[id] + ` | ` + gunInfo[i].en_name;
+        }
     }
 }
 
 function selectGun(id) {
     curGun = gunInfo[id];
-    var html = `<h2>${curGun.en_name}</h2>
+    var html = `<h2>${document.getElementById(curGun.name).innerHTML}</h2>
     <p>建造时间：${seconds2Str(curGun.develop_duration)}<br>
     星级：${curGun.rank}</p>`;
     document.getElementById("gunInfoCard").innerHTML = html;
