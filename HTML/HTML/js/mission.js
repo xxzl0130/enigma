@@ -39,6 +39,10 @@ function onTableLoad() {
 }
 
 function confirmMission() {
+    var select = document.getElementById("SelectSub").selectedOptions[0];
+    var html = `<h2>${select.text}</h2>`;
+    document.getElementById("missionInfoCard").innerHTML = html;
+
     document.getElementById("content").style.display = "none";
     document.getElementById("details").style.display = "";
 }
@@ -53,8 +57,14 @@ function selectCampaign() {
     var html = ``;
     for (var key in missionInfo) {
         var mission = missionInfo[key];
-        if (mission.campaign == campaign && mission.name.startsWith("mission")) {
-            html += `<option value="${mission.sub}">${table[mission.name]}<\/option>\n`;
+        if (mission.campaign == campaign && mission.name.startsWith("mission") && mission.if_emergency != 2) {
+            var name = "";
+            if (mission.campaign >= 0) {
+                name += String(mission.campaign) + "-" + String(mission.sub);
+                name += (mission.if_emergency == 1) ? "E" : ((mission.if_emergency == 3) ? "N" : " ");
+            }
+            name += table[mission.name].split("//")[0];
+            html += `<option value="${mission.sub}">${name}<\/option>\n`;
         }
     }
     document.getElementById("SelectSub").innerHTML = html;
