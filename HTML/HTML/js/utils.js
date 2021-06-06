@@ -13,3 +13,7 @@ function num2str(num, bit){
     }
     return str;
 }
+
+function sortDetailTable(key) {
+    console.log(key);
+}

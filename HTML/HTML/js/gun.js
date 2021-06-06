@@ -20,7 +20,7 @@ function setupGun() {
         document.getElementById('content').innerHTML += html;
     });
     var xhr = new XMLHttpRequest();
-    xhr.open("GET", host + "/static/gun_info.json");
+    xhr.open("GET", host + "/static/gunInfo.json");
     xhr.onload = onGunInfoLoad;
     xhr.send();
 }
@@ -72,10 +72,6 @@ function selectGun(id) {
 function retrurnContent() {
     document.getElementById("content").style.display = "";
     document.getElementById("details").style.display = "none";
-}
-
-function sortDetailTable(key){
-    console.log(key);
 }
 
 function selectTime(){

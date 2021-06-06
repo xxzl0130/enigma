@@ -52,3 +52,6 @@ nav::-webkit-scrollbar {
 .gun-2-star:hover{
     background-color: #acc5b3;
 }
+.responsive-label {
+    align-items: center;
+}

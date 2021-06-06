@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="utf-8">
+    <title>战役打捞记录查询</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mini.css/3.0.1/mini-default.min.css" />
+<link rel="stylesheet" href="./css/stylesheet.css" />
+
+<body>
+    <div id="root">
+        <header id="header" class="row"></header>
+        <div class="row" id="below-header">
+            <input id="doc-drawer-checkbox" class="drawer" value="on" type="checkbox">
+            <nav class="col-sm-12 col-md-3 col-lg-2" id="nav-drawer">
+            </nav>
+            <div class="main col-sm-12 col-md-9 col-lg-10" id="content">
+                <div id="SelectMissionCard" class="card fluid">
+                    <h2 class="section double-padded">选择战役</h2>
+                    <div class="section" id="SelectMissionSection">
+                        <div class="row">
+                            <div class="responsive-label col-sm-12 col-md-5 col-lg-5">
+                                <label for="SelectCampaign">章节</label>
+                                <select id="SelectCampaign" style="width:80%;" onchange="selectCampaign();"></select>
+                            </div>
+                            <div class="responsive-label col-sm-12 col-md-5 col-lg-5">
+                                <label for="SelectSub">关卡</label>
+                                <select id="SelectSub" style="width:80%;"></select>
+                            </div>
+                        </div>
+                        <button type="button" class="large primary btn" id="ConfirmMission" onclick="confirmMission();">确定</button>
+                    </div>
+                </div>
+            </div>
+            <div class="main col-sm-12 col-md-9 col-lg-10" id="details" style="display:none">
+                <div class="section">
+                    <button type="button" class="large primary btn" id="return" onclick="retrurnContent();">返回</button>
+                    <div class="row">
+                        <div>
+                            <div id="gunInfoCard">
+                            </div>
+                            <div class="row">
+                                <input type="radio" name="selRank" autocomplete="off" id="normalInfo"
+                                    onchange="selectRank(5);" checked>S评价
+                                <input type="radio" name="selRank" autocomplete="off" id="heavyInfo"
+                                    onchange="selectRank(4);">A评价
+                                <input type="radio" name="selRank" autocomplete="off" id="heavyInfo"
+                                    onchange="selectRank(3);">B评价
+                                <input type="radio" name="selRank" autocomplete="off" id="allInfo"
+                                    onchange="selectRank(-1);">显示全部
+                            </div>
+                            <div class="row">
+                                <input type="radio" name="selFairy" autocomplete="off" id="normalInfo" onchange="selectFairy(1);" checked>有搜救
+                                <input type="radio" name="selFairy" autocomplete="off" id="heavyInfo" onchange="selectFairy(0);">无搜救
+                                <input type="radio" name="selFairy" autocomplete="off" id="allInfo" onchange="selectFairy(-1);">显示全部
+                            </div>
+                            <label for="selectTimeControl" class="small primary button">选择时段</label>
+                            <input type="checkbox" id="selectTimeControl" class="modal">
+                            <div>
+                                <div class="card">
+                                    <label for="selectTimeControl" class="modal-close"></label>
+                                    <h3 class="section">时间段列表</h3>
+                                    <div id="selectTimeContent"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <table id="detailTable" class="striped">
+                        <thead>
+                            <tr>
+                                <th>序号</th>
+                                <th onclick="sortDetailTable('mission_id');">战役</th>
+                                <th onclick="sortDetailTable('enemy');">敌方</th>
+                                <th onclick="sortDetailTable('battle_rank');">评价</th>
+                                <th onclick="sortDetailTable('gun_id');">人形</th>
+                                <th onclick="sortDetailTable('gun_total');">出货数</th>
+                                <th onclick="sortDetailTable('gun_rate');">出货率</th>
+                                <th onclick="sortDetailTable('equip_id');">装备</th>
+                                <th onclick="sortDetailTable('equip_total');">出货数</th>
+                                <th onclick="sortDetailTable('equip_rate');">出货率</th>
+                                <th onclick="sortDetailTable('total');">总数</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script type="text/javascript" src="./js/utils.js"></script>
+<script type="text/javascript" src="./js/setup.js"></script>
+<script type="text/javascript" src="./js/mission.js"></script>
+<script>
+    window.onload = function () {
+        setup("战役打捞记录查询");
+        setupMission();
+    }
+</script>
+
+</html>
