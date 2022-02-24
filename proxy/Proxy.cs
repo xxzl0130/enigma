@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
@@ -36,7 +37,7 @@ namespace enigma.proxy
         /// </summary>
         private ProxyServer _proxyServer;
 
-        private ProxyEndPoint _endPoint;
+        private ExplicitProxyEndPoint _endPoint;
 
         /// <summary>
         /// 妖精信息
@@ -170,7 +171,7 @@ namespace enigma.proxy
         /// </summary>
         private Proxy()
         {
-            _proxyServer = new ProxyServer(false, false, false)
+            _proxyServer = new ProxyServer()
             {
                 TcpTimeWaitSeconds = 10,
                 ConnectionTimeOutSeconds = 15,
@@ -178,13 +179,15 @@ namespace enigma.proxy
                 EnableConnectionPool = false,
                 ForwardToUpstreamGateway = false
             };
-            // 阻止生成pfx文件
-            _proxyServer.CertificateManager.SaveFakeCertificates = false;
-            _proxyServer.CertificateManager.RootCertificate = new X509Certificate2();
+
+            _proxyServer.CertificateManager.SaveFakeCertificates = true;
             _proxyServer.BeforeResponse += BeforeResponse;
             _proxyServer.BeforeRequest += BeforeRequest;
-            _endPoint = new ExplicitProxyEndPoint(IPAddress.Any, 18888, false);
+            _endPoint = new ExplicitProxyEndPoint(IPAddress.Any, 18888);
+            _endPoint.BeforeTunnelConnectRequest += BeforeTunnelConnectRequest;
+            _endPoint.BeforeTunnelConnectResponse += BeforeTunnelConnectResponse;
             _proxyServer.AddEndPoint(_endPoint);
+            _proxyServer.ServerCertificateValidationCallback += ServerCertificateValidationCallback;
             _signTimer = new Timer(Defines.SignExpireTime)
                 {AutoReset = true, Enabled = true, Interval = Defines.SignExpireTime};
             _signTimer.Elapsed += _signTimerElapsed;
@@ -212,6 +215,69 @@ namespace enigma.proxy
                 socket.Connect(Defines.NetTestIP, 65530);
                 LocalIPAddress = socket.LocalEndPoint is IPEndPoint endPoint ? endPoint.Address.ToString() : "";
             }
+        }
+
+        private Task ServerCertificateValidationCallback(object sender, CertificateValidationEventArgs e)
+        {
+            if (e.SslPolicyErrors == SslPolicyErrors.None)
+            {
+                e.IsValid = true;
+            }
+            return Task.CompletedTask;
+        }
+
+        private Task BeforeTunnelConnectResponse(object sender, TunnelConnectSessionEventArgs e)
+        {
+            try
+            {
+                e.DecryptSsl = false;
+                var host = e.HttpClient.Request.Host;
+                var url = e.HttpClient.Request.Url;
+                Log?.Verbose("Tunnel Response {url}", url);
+
+                if (host == null)
+                    return Task.CompletedTask;
+                if (HostList.All(it => !host.EndsWith(it)))
+                    return Task.CompletedTask;
+                //if (!(UidList.Any(it => url.EndsWith(it)) ||
+                //      _urlList.Any(it => url.EndsWith(it)) ||
+                //      _specialUrlDict.Any(it => url.EndsWith(it.Key))))
+                //    return Task.CompletedTask;
+
+                e.DecryptSsl = true;
+            }
+            catch (Exception err)
+            {
+                Log?.Warning(err.ToString());
+            }
+            return Task.CompletedTask;
+        }
+
+        private Task BeforeTunnelConnectRequest(object sender, TunnelConnectSessionEventArgs e)
+        {
+            try
+            {
+                e.DecryptSsl = false;
+                var host = e.HttpClient.Request.Host;
+                var url = e.HttpClient.Request.Url;
+                Log?.Verbose("Tunnel Request {url}", url);
+
+                if (host == null)
+                    return Task.CompletedTask;
+                if (HostList.All(it => !host.EndsWith(it)))
+                    return Task.CompletedTask;
+                //if (!(UidList.Any(it => url.EndsWith(it)) ||
+                //      _urlList.Any(it => url.EndsWith(it)) ||
+                //      _specialUrlDict.Any(it => url.EndsWith(it.Key))))
+                //    return Task.CompletedTask;
+
+                e.DecryptSsl = true;
+            }
+            catch (Exception err)
+            {
+                Log?.Warning(err.ToString());
+            }
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -251,7 +317,9 @@ namespace enigma.proxy
                 if (running)
                     _proxyServer.Stop();
                 _proxyServer.RemoveEndPoint(_endPoint);
-                _endPoint = new ExplicitProxyEndPoint(IPAddress.Any, value, false);
+                _endPoint = new ExplicitProxyEndPoint(IPAddress.Any, value);
+                _endPoint.BeforeTunnelConnectRequest += BeforeTunnelConnectRequest;
+                _endPoint.BeforeTunnelConnectResponse += BeforeTunnelConnectResponse;
                 _proxyServer.AddEndPoint(_endPoint);
                 if (running)
                     _proxyServer.Start();

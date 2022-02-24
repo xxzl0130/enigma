@@ -22,7 +22,7 @@ namespace enigma_server
         static void Main(string[] args)
         {
             var Log = new LoggerConfiguration()
-                .MinimumLevel.Debug()
+                .MinimumLevel.Verbose()
                 //.MinimumLevel.Verbose()
                 .WriteTo.Console()
                 //.WriteTo.File("./log.txt")
@@ -34,7 +34,6 @@ namespace enigma_server
                 Proxy.Instance.DataEvent += DataEvent;
                 Proxy.Instance.EnableBlocking = false;
                 Proxy.Instance.Log = Log;
-                Proxy.Instance.EnableBlocking = true;
                 Proxy.Instance.Start();
                 DB.Instance.DataBasePath = "test.db";
                 DB.Instance.Log = Log;
